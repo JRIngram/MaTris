@@ -17,3 +17,13 @@ class board():
     
     def update_board_representation(self, boardRepresentation):
         self.boardRepresentation = boardRepresentation
+    
+    def __str__(self):
+        boardString = ""
+        for row in self.boardRepresentation:
+            for x in range(len(row)):
+                if(x == len(row) - 1):
+                    boardString = boardString + str(row[x]) + "\n"
+                else:
+                    boardString = boardString + str(row[x]) + ","
+        return boardString
