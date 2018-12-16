@@ -4,6 +4,7 @@ from pygame import Rect, Surface
 import random
 import os
 import kezmenu
+import agent
 
 from tetrominoes import list_of_tetrominoes
 from tetrominoes import rotate
@@ -38,6 +39,9 @@ VISIBLE_MATRIX_HEIGHT = MATRIX_HEIGHT - 2
 
 
 class Matris(object):
+    
+    board = agent.board()
+    
     def __init__(self):
         self.surface = screen.subsurface(Rect((MATRIS_OFFSET+BORDERWIDTH, MATRIS_OFFSET+BORDERWIDTH),
                                               (MATRIX_WIDTH * BLOCKSIZE, (MATRIX_HEIGHT-2) * BLOCKSIZE)))
@@ -356,6 +360,7 @@ class Matris(object):
             self.gameover()
             
         self.needs_redraw = True
+        self.board.update_board_representation(self.create_board_representation())
 
     def remove_lines(self):
         """
@@ -367,7 +372,7 @@ class Matris(object):
             line = (y, [])
             for x in range(MATRIX_WIDTH):
                 if self.matrix[(y,x)]:
-                    line[1].append(x)
+                     line[1].append(x)
             if len(line[1]) == MATRIX_WIDTH:
                 lines.append(y)
 
@@ -421,6 +426,23 @@ class Matris(object):
                 if shape[y][x]:
                     surf.blit(self.block(self.next_tetromino.color), (x*BLOCKSIZE, y*BLOCKSIZE))
         return surf
+    
+    def create_board_representation(self):
+        lines = []
+        for y in range(MATRIX_HEIGHT):
+            #Checks if row if full, for each row
+            line = (y, [])
+            for x in range(MATRIX_WIDTH):
+                if self.matrix[(y,x)]:
+                    line[1].append(1)
+                else:
+                    line[1].append(0)
+            lines.append(line[1])
+        board = []
+        for i in range (len(lines)):
+            board.append(lines[i])
+        
+        return board
 
 class Game(object):
     def main(self, screen):
