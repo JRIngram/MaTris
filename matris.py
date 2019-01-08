@@ -365,6 +365,7 @@ class Matris(object):
         self.board.set_holes()
         print(str(self.board))
         print("Board Height: " + str(self.board.get_board_height()))
+        print("Cumulative Height: " + str(self.board.get_cum_height()))
         print("Holes: " + str(self.board.get_holes()))
 
     def remove_lines(self):

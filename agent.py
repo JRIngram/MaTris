@@ -8,10 +8,9 @@ class board():
     0 = empty.
     1 = full.
     """
-    
     boardRepresentation = []
     board_height = 0
-    cum_height = 0
+    cum_height = 0 #Cumulative height of the board
     holes_per_column = []
     
     def __init__(self, boardRepresentation=[]):
@@ -42,9 +41,13 @@ class board():
                 elif(y == 21): #Column is empty
                     column_heights.append(0)
         self.board_height = max(column_heights)
+        self.cum_height = sum(column_heights)
     
     def get_board_height(self):
         return self.board_height
+    
+    def get_cum_height(self):
+        return self.cum_height
     
     def set_holes(self):
         holes_per_column = []
