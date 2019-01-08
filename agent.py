@@ -12,7 +12,7 @@ class board():
     boardRepresentation = []
     board_height = 0
     cum_height = 0
-    holes = 0
+    holes_per_column = []
     
     def __init__(self, boardRepresentation=[]):
         self.boardRepresentation = boardRepresentation
@@ -47,10 +47,20 @@ class board():
         return self.board_height
     
     def set_holes(self):
-        return 0
+        holes_per_column = []
+        for x in range(len(self.boardRepresentation[0])): #Number of columns
+            holes_in_column = 0
+            below_full_cell = False
+            for y in range (len(self.boardRepresentation)): #Number of rows
+                if(self.boardRepresentation[y][x] == 1 and below_full_cell == False):
+                    below_full_cell = True
+                if(below_full_cell == True and self.boardRepresentation[y][x] == 0):
+                    holes_in_column = holes_in_column + 1
+            holes_per_column.append(holes_in_column)
+        self.holes_per_column = holes_per_column
     
     def get_holes(self):
-        return 0
+        return sum(self.holes_per_column)
     
     
     
