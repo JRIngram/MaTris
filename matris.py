@@ -361,7 +361,9 @@ class Matris(object):
             
         self.needs_redraw = True
         self.board.update_board_representation(self.create_board_representation())
+        self.board.set_board_height()
         print(str(self.board))
+        print("Board Height: " + str(self.board.get_board_height()))
 
     def remove_lines(self):
         """
