@@ -41,6 +41,7 @@ VISIBLE_MATRIX_HEIGHT = MATRIX_HEIGHT - 2
 class Matris(object):
     
     board = agent.board()
+    agent = agent.agent()
     
     def __init__(self):
         self.surface = screen.subsurface(Rect((MATRIS_OFFSET+BORDERWIDTH, MATRIS_OFFSET+BORDERWIDTH),
@@ -59,6 +60,7 @@ class Matris(object):
 
         self.next_tetromino = random.choice(list_of_tetrominoes)
         self.set_tetrominoes()
+        self.agent.set_agent_tetromino(self.current_tetromino)
         self.tetromino_rotation = 0
         self.downwards_timer = 0
         self.base_downwards_speed = 0.4 # Move down every 400 ms
@@ -354,6 +356,7 @@ class Matris(object):
         self.combo = self.combo + 1 if lines_cleared else 1
 
         self.set_tetrominoes()
+        self.agent.set_agent_tetromino(self.current_tetromino)
 
         if not self.blend():
             self.gameover_sound.play()

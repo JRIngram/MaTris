@@ -65,9 +65,31 @@ class board():
     def get_holes(self):
         return sum(self.holes_per_column)
     
+class agent():
     
+    agent_tetromino = []
     
+    def __init__(self, tetromino=[]):
+        self.agent_tetromino = tetromino
     
+    def set_agent_tetromino(self, tetromino):
+        tetromino_array = []
+        for x in range(len(tetromino[2])):
+            tetromino_row = []
+            for y in range(len(tetromino[2][x])):
+                if tetromino[2][x][y] == 'X':
+                    tetromino_row.append(1)
+                else:
+                    tetromino_row.append(0)
+            tetromino_array.append(tetromino_row)
+        self.agent_tetromino = tetromino_array
+    
+    def get_agent_tetromino(self, tetromino):
+        return self.agent_tetromino
+    
+
+
+        
     
     
     
