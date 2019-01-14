@@ -73,6 +73,7 @@ class agent():
         self.agent_tetromino = tetromino
     
     def set_agent_tetromino(self, tetromino):
+        self.agent_tetromino = []
         tetromino_array = []
         for x in range(len(tetromino[2])):
             tetromino_row = []
@@ -82,12 +83,26 @@ class agent():
                 else:
                     tetromino_row.append(0)
             tetromino_array.append(tetromino_row)
-        self.agent_tetromino = tetromino_array
+        self.agent_tetromino.append(tetromino_array)
+        for x in range (0,3):
+            self.agent_tetromino.append(self.rotate_agent_tetromino(self.agent_tetromino[x]))
+        x=0
     
     def get_agent_tetromino(self, tetromino):
         return self.agent_tetromino
     
-
+    def rotate_agent_tetromino(self, tetromino):
+        rotating_tetromino = tetromino
+        rotated_tetromino = []
+        #Currently rotates L blocks the wrong way
+        #REVERSE ARRAYS BEFORE INPUTTING THEM
+        for x in range(len(rotating_tetromino)):
+            column = []
+            for y in range(len(rotating_tetromino)):
+                column.append(rotating_tetromino[y][x])
+            rotated_tetromino.append(list(reversed(column)))
+        return rotated_tetromino
+                
 
         
     
