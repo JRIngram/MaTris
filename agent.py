@@ -11,6 +11,7 @@ class board():
     boardRepresentation = []
     board_height = 0
     cum_height = 0 #Cumulative height of the board
+    column_heights = 0
     holes_per_column = []
     
     def __init__(self, boardRepresentation=[]):
@@ -42,6 +43,7 @@ class board():
                     column_heights.append(0)
         self.board_height = max(column_heights)
         self.cum_height = sum(column_heights)
+        self.column_heights = column_heights
     
     def get_board_height(self):
         return self.board_height
@@ -86,7 +88,6 @@ class agent():
         self.agent_tetromino.append(tetromino_array)
         for x in range (0,3):
             self.agent_tetromino.append(self.rotate_agent_tetromino(self.agent_tetromino[x]))
-        x=0
     
     def get_agent_tetromino(self, tetromino):
         return self.agent_tetromino
