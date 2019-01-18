@@ -389,6 +389,7 @@ class Matris(object):
         #Passes tetromino and board information to the agent.
         self.agent.set_agent_tetromino(self.current_tetromino)
         self.agent.set_current_board(self.board)
+        self.agent.choose_tetromino_placement(0)
 
     def remove_lines(self):
         """

@@ -2,6 +2,8 @@
 Module used to create a Tetris playing agent
 Created by JRIngram 
 """
+import copy
+
 class board():
     """
     Representation of the board as an array of numbers.
@@ -111,6 +113,58 @@ class agent():
     def set_current_board(self, board):
         self.current_board = board
         
+        
+    def choose_tetromino_placement(self, rotation):
+        column_heights = self.current_board.column_heights
+        tetromino = self.agent_tetromino
+        tetromino_width_stats = self.calculate_tetromino_width(rotation)
+        tetromino_height_stats = self.calculate_tetromino_height(rotation)
+        #Need to trim None values and find empty column get a more realistic shape of the tetromino
+        tetromino_width = len(tetromino_width_stats)
+        tetromino_height = len(tetromino_width_stats) -1
+        '''
+        for x in range(len(tetromino_width_stats)):
+            if tetromino_width_stats[x] == 1 or tetromino_width_stats[x] == None:
+                tetromino_width = tetromino_width + 1
+        for x in range(len(tetromino_height_stats)):
+            if tetromino_height_stats[x] == 1 or tetromino_height_stats[x] == None:
+                tetromino_height = tetromino_height + 1
+        tetromino_width = tetromino_width + 1
+        '''
+                
+        #Calculate rows below full cell
+        
+        #Check column height and for each column
+        valid_placements = []
+        for column in range(len(column_heights)-(tetromino_width-1)):
+            test_board = copy.deepcopy(self.current_board)
+            placeable_height = 21 - column_heights[column]
+            for tet_height in range(tetromino_height+1): #for each row in the tetromino
+                for tet_width in range(tetromino_width): #for each column in tetromino
+                                                    #moves up the placeable row   #the x-axis to place the tetromino
+                    test_board.boardRepresentation[placeable_height - tet_height][column+tet_width] = test_board.boardRepresentation[placeable_height - tet_height][column+tet_width] + self.agent_tetromino[rotation][tetromino_height - tet_height][tet_width]
+            
+            can_place = True
+            for row in range(len(test_board.boardRepresentation)):
+                for column in range(len(test_board.boardRepresentation[row])):
+                    if test_board.boardRepresentation[row][column] != 1 and test_board.boardRepresentation[row][column] != 0:
+                        can_place = False
+                        break
+                if can_place == False:
+                    break
+            if can_place == True:
+                    coordinate_tag = []
+                    coordinate_tag.append(rotation)
+                    coordinate_tag.append(column)
+                    coordinate_tag.append(placeable_height)
+                    placeable_position = []
+                    placeable_position.append(coordinate_tag)
+                    placeable_position.append(test_board)
+                    valid_placements.append(placeable_position)
+                        
+            
+            #Check that board is valid
+        
     def calculate_tetromino_width(self,rotation):
         potential_width = len(self.agent_tetromino[rotation][0]) #number of columns
         full_columns = [None]*potential_width
@@ -119,7 +173,7 @@ class agent():
                 if self.agent_tetromino[rotation][x][y] == 1:
                     full_columns[y] = 1
             #TODO Add break once full_columns is full?
-        return sum(full_columns)
+        return full_columns
             
     def calculate_tetromino_height(self, rotation):
         potential_height = len(self.agent_tetromino[rotation])
@@ -129,7 +183,7 @@ class agent():
                if self.agent_tetromino[rotation][y][x] == 1:
                    full_rows[y] = 1
              #TODO Add break once full_rows is full?
-        return sum(full_rows)
+        return full_rows
             
     
     
