@@ -60,7 +60,20 @@ class Matris(object):
 
         self.next_tetromino = random.choice(list_of_tetrominoes)
         self.set_tetrominoes()
+        
+        #Creates a reperesentation of the initial board
+        self.board.update_board_representation(self.create_board_representation())
+        self.board.set_board_height()
+        self.board.set_holes()
+        print(str(self.board))
+        print("Board Height: " + str(self.board.get_board_height()))
+        print("Cumulative Height: " + str(self.board.get_cum_height()))
+        print("Holes: " + str(self.board.get_holes()))
+        
+        #Set up the the agent
+        self.agent.set_current_board(self.board)
         self.agent.set_agent_tetromino(self.current_tetromino)
+        
         self.tetromino_rotation = 0
         self.downwards_timer = 0
         self.base_downwards_speed = 0.4 # Move down every 400 ms
@@ -356,13 +369,15 @@ class Matris(object):
         self.combo = self.combo + 1 if lines_cleared else 1
 
         self.set_tetrominoes()
-        self.agent.set_agent_tetromino(self.current_tetromino)
 
         if not self.blend():
             self.gameover_sound.play()
             self.gameover()
-            
+        
         self.needs_redraw = True
+        
+        #self.tetromino_position = (0,0)
+        #Collects information from the board.
         self.board.update_board_representation(self.create_board_representation())
         self.board.set_board_height()
         self.board.set_holes()
@@ -370,6 +385,10 @@ class Matris(object):
         print("Board Height: " + str(self.board.get_board_height()))
         print("Cumulative Height: " + str(self.board.get_cum_height()))
         print("Holes: " + str(self.board.get_holes()))
+        
+        #Passes tetromino and board information to the agent.
+        self.agent.set_agent_tetromino(self.current_tetromino)
+        self.agent.set_current_board(self.board)
 
     def remove_lines(self):
         """

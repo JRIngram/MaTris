@@ -20,6 +20,9 @@ class board():
     
     def update_board_representation(self, boardRepresentation):
         self.boardRepresentation = boardRepresentation
+        
+    def get_board_representation(self):
+        return self.boardRepresentation
     
     def __str__(self):
         #Note: board will be 22 in height as Matris uses the top two columns as the initial appearance of tetrominos on the board
@@ -70,6 +73,7 @@ class board():
 class agent():
     
     agent_tetromino = []
+    current_board = None
     
     def __init__(self, tetromino=[]):
         self.agent_tetromino = tetromino
@@ -103,7 +107,9 @@ class agent():
                 column.append(rotating_tetromino[y][x])
             rotated_tetromino.append(list(reversed(column)))
         return rotated_tetromino
-                
+    
+    def set_current_board(self, board):
+        self.current_board = board
 
         
     
