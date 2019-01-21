@@ -2,7 +2,7 @@
 Module used to create a Tetris playing agent
 Created by JRIngram 
 """
-import copy
+import copy, time, random
 
 class board():
     """
@@ -111,6 +111,25 @@ class agent():
     def set_current_board(self, board):
         self.current_board = board  
         
+    def choose_random_tetromino_placement(self):
+        t = time.time()
+        possible_placements = self.find_valid_placements()
+        rotation = random.randint(0,3) 
+        number_of_placements = len(possible_placements[rotation])-1
+        if number_of_placements == -1:
+            print("HELP!")
+        placement_option = random.randint(0,number_of_placements)
+        #rotation,height,column
+        x=possible_placements[rotation]
+        y=possible_placements[rotation][placement_option]
+        z=possible_placements[rotation][placement_option][0]
+        a=possible_placements[rotation][placement_option][0][2]
+        placement = [rotation,possible_placements[rotation][placement_option][0][2],possible_placements[rotation][placement_option][0][1]]
+        elapsed = time.time() - t
+        print("Time Taken:" + str(elapsed))
+        return placement
+        
+        
     def find_valid_placements(self):
         valid_placements = []
         #Hard coded as only 4 possible rotations
@@ -118,6 +137,7 @@ class agent():
         valid_placements.append(self.find_valid_placements_for_rotation(1))
         valid_placements.append(self.find_valid_placements_for_rotation(2))
         valid_placements.append(self.find_valid_placements_for_rotation(3))
+        return valid_placements
         
         
     def find_valid_placements_for_rotation(self, rotation):

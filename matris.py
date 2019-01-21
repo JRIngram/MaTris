@@ -5,6 +5,7 @@ import random
 import os
 import kezmenu
 import agent
+import time
 
 from tetrominoes import list_of_tetrominoes
 from tetrominoes import rotate
@@ -42,6 +43,7 @@ class Matris(object):
     
     board = agent.board()
     agent = agent.agent()
+    agent_mode = True #used to check if agent is playing. Causes hard-drops to always happen.
     
     def __init__(self):
         self.surface = screen.subsurface(Rect((MATRIS_OFFSET+BORDERWIDTH, MATRIS_OFFSET+BORDERWIDTH),
@@ -97,6 +99,12 @@ class Matris(object):
         self.gameover_sound = get_sound("gameover.wav")
         self.linescleared_sound = get_sound("linecleared.wav")
         self.highscorebeaten_sound = get_sound("highscorebeaten.wav")
+        
+        #Agent's first move
+        tetromino_placement = self.agent.choose_random_tetromino_placement()
+        self.tetromino_position = (0,tetromino_placement[2])
+        for rotations in range(tetromino_placement[0]):
+            self.request_rotation()
 
 
     def set_tetrominoes(self):
@@ -132,6 +140,9 @@ class Matris(object):
         
         pressed = lambda key: event.type == pygame.KEYDOWN and event.key == key
         unpressed = lambda key: event.type == pygame.KEYUP and event.key == key
+        
+        if self.agent_mode == True:
+                self.hard_drop()
 
         events = pygame.event.get()
         #Controls pausing and quitting the game.
@@ -150,7 +161,7 @@ class Matris(object):
 
         for event in events:
             #Controls movement of the tetromino
-            if pressed(pygame.K_SPACE):
+            if pressed(pygame.K_SPACE) or self.agent_mode == True:
                 self.hard_drop()
             elif pressed(pygame.K_UP) or pressed(pygame.K_w):
                 self.request_rotation()
@@ -389,7 +400,12 @@ class Matris(object):
         #Passes tetromino and board information to the agent.
         self.agent.set_agent_tetromino(self.current_tetromino)
         self.agent.set_current_board(self.board)
-        possible_placements = self.agent.find_valid_placements()
+        tetromino_placement = self.agent.choose_random_tetromino_placement()
+        self.tetromino_position = (0,tetromino_placement[2])
+        for rotations in range(tetromino_placement[0]):
+            self.request_rotation()
+            
+        pygame.time.wait(100)
 
     def remove_lines(self):
         """
