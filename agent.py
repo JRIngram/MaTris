@@ -101,8 +101,6 @@ class agent():
     def rotate_agent_tetromino(self, tetromino):
         rotating_tetromino = tetromino
         rotated_tetromino = []
-        #Currently rotates L blocks the wrong way
-        #REVERSE ARRAYS BEFORE INPUTTING THEM
         for x in range(len(rotating_tetromino)):
             column = []
             for y in range(len(rotating_tetromino)):
@@ -111,10 +109,18 @@ class agent():
         return rotated_tetromino
     
     def set_current_board(self, board):
-        self.current_board = board
+        self.current_board = board  
+        
+    def find_valid_placements(self):
+        valid_placements = []
+        #Hard coded as only 4 possible rotations
+        valid_placements.append(self.find_valid_placements_for_rotation(0))
+        valid_placements.append(self.find_valid_placements_for_rotation(1))
+        valid_placements.append(self.find_valid_placements_for_rotation(2))
+        valid_placements.append(self.find_valid_placements_for_rotation(3))
         
         
-    def choose_tetromino_placement(self, rotation):
+    def find_valid_placements_for_rotation(self, rotation):
         column_heights = self.current_board.column_heights
         tetromino = self.agent_tetromino
         tetromino_width_stats = self.calculate_tetromino_width(rotation)
@@ -145,9 +151,9 @@ class agent():
                     test_board.boardRepresentation[placeable_height - tet_height][column+tet_width] = test_board.boardRepresentation[placeable_height - tet_height][column+tet_width] + self.agent_tetromino[rotation][tetromino_height - tet_height][tet_width]
             
             can_place = True
-            for row in range(len(test_board.boardRepresentation)):
-                for column in range(len(test_board.boardRepresentation[row])):
-                    if test_board.boardRepresentation[row][column] != 1 and test_board.boardRepresentation[row][column] != 0:
+            for check_row in range(len(test_board.boardRepresentation)):
+                for check_column in range(len(test_board.boardRepresentation[check_row])):
+                    if test_board.boardRepresentation[check_row][check_column] != 1 and test_board.boardRepresentation[check_row][check_column] != 0:
                         can_place = False
                         break
                 if can_place == False:
@@ -161,9 +167,7 @@ class agent():
                     placeable_position.append(coordinate_tag)
                     placeable_position.append(test_board)
                     valid_placements.append(placeable_position)
-                        
-            
-            #Check that board is valid
+        return valid_placements
         
     def calculate_tetromino_width(self,rotation):
         potential_width = len(self.agent_tetromino[rotation][0]) #number of columns
