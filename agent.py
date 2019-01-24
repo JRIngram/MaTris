@@ -20,13 +20,23 @@ class board():
         self.boardRepresentation = boardRepresentation
         
     
+
     def update_board_representation(self, boardRepresentation):
+        """
+        Creates an update board representation
+        """
         self.boardRepresentation = boardRepresentation
-        
-    def get_board_representation(self):
+
+    def get_board_representation(self):    
+        """
+        Returns the current board representation
+        """
         return self.boardRepresentation
-    
+
     def __str__(self):
+        """
+        Returns the board as a series of rows, each corresponding to a row in the board.
+        """
         #Note: board will be 22 in height as Matris uses the top two columns as the initial appearance of tetrominos on the board
         boardString = ""
         for row in self.boardRepresentation:
@@ -36,8 +46,12 @@ class board():
                 else:
                     boardString = boardString + str(row[x]) + ","
         return boardString
-    
+
     def set_board_height(self):
+        """
+        Calculates the highest column height in the board.
+        Also assigns cumulative height value: column1(height) + column2(height) + ... + columnN(height)
+        """
         column_heights = [];
         for x in range(len(self.boardRepresentation[0])): #Number of columns
             for y in range (len(self.boardRepresentation)): #Number of rows
@@ -51,12 +65,23 @@ class board():
         self.column_heights = column_heights
     
     def get_board_height(self):
+        """
+        Returns the board height.
+        """
         return self.board_height
-    
-    def get_cum_height(self):
+
+    def get_cum_height(self):   
+        """
+        Returns cumulative height of the the board
+        """
         return self.cum_height
     
     def set_holes(self):
+        """
+        Calculates the number of holes in each column.
+        A hole is a cell that is below a full cell in a column:
+            e.g. if cell was full at height 3, and all cells below that were empty, there would be 2 holes.  
+        """
         holes_per_column = []
         for x in range(len(self.boardRepresentation[0])): #Number of columns
             holes_in_column = 0
@@ -73,7 +98,10 @@ class board():
         return sum(self.holes_per_column)
     
 class agent():
-    
+    """
+    Agent that will learn to play Tetris.
+    Stores the current tetromino and a representation of the board.
+    """
     agent_tetromino = []
     current_board = None
     
@@ -81,6 +109,15 @@ class agent():
         self.agent_tetromino = tetromino
     
     def set_agent_tetromino(self, tetromino):
+        """
+        Stores the current tetromino and all rotations of that tetromino. 
+        Each tetromino is stored 4 times as the tetromino can rotate 4 times.
+        Tetromino is stored as 0 for an empty cell in the matrix or 1 for a full cell in the matrix.
+        E.g. an "L" tetromino is stored as
+            [[0,1,0]
+             [0,1,0]
+             [0,1,1]]
+        """
         self.agent_tetromino = []
         tetromino_array = []
         for x in range(len(tetromino[2])):
@@ -95,10 +132,17 @@ class agent():
         for x in range (0,3):
             self.agent_tetromino.append(self.rotate_agent_tetromino(self.agent_tetromino[x]))
     
-    def get_agent_tetromino(self, tetromino):
+    def get_agent_tetromino(self):
+        """
+        Returns the agent's tetromino
+        """
         return self.agent_tetromino
     
     def rotate_agent_tetromino(self, tetromino):
+        """
+        Returns a rotation of the agent's current tetromino.
+        Used to calculate all rotations for that tetromino in set_agent_tetromino
+        """
         rotating_tetromino = tetromino
         rotated_tetromino = []
         for x in range(len(rotating_tetromino)):
@@ -109,9 +153,15 @@ class agent():
         return rotated_tetromino
     
     def set_current_board(self, board):
+        """
+        Sets the current board representation for the 
+        """
         self.current_board = board  
         
     def choose_random_tetromino_placement(self):
+        """
+        Chooses a random valid placement on the Tetris board to place a tetromino
+        """
         t = time.time()
         possible_placements = self.find_valid_placements()
         rotation = random.randint(0,3) 
@@ -131,6 +181,10 @@ class agent():
         
         
     def find_valid_placements(self):
+        """
+        Searches the board for valid placements
+        Searches the top of each column on the board for valid placement.
+        """
         valid_placements = []
         #Hard coded as only 4 possible rotations
         valid_placements.append(self.find_valid_placements_for_rotation(0))
@@ -141,6 +195,10 @@ class agent():
         
         
     def find_valid_placements_for_rotation(self, rotation):
+        """
+        Searches the board for valid placements for a rotation of a tetromino
+        This is performed 4 times. Once for each tetromino.
+        """
         column_heights = self.current_board.column_heights
         tetromino = self.agent_tetromino
         tetromino_width_stats = self.calculate_tetromino_width(rotation)
@@ -148,15 +206,6 @@ class agent():
         #Need to trim None values and find empty column get a more realistic shape of the tetromino
         tetromino_width = len(tetromino_width_stats)
         tetromino_height = len(tetromino_width_stats) -1
-        '''
-        for x in range(len(tetromino_width_stats)):
-            if tetromino_width_stats[x] == 1 or tetromino_width_stats[x] == None:
-                tetromino_width = tetromino_width + 1
-        for x in range(len(tetromino_height_stats)):
-            if tetromino_height_stats[x] == 1 or tetromino_height_stats[x] == None:
-                tetromino_height = tetromino_height + 1
-        tetromino_width = tetromino_width + 1
-        '''
                 
         #Calculate rows below full cell
         
@@ -190,6 +239,10 @@ class agent():
         return valid_placements
         
     def calculate_tetromino_width(self,rotation):
+        """
+        Calculates the width of the current tetromino.
+        Finds out how many cells on the X axis are actually filled.
+        """
         potential_width = len(self.agent_tetromino[rotation][0]) #number of columns
         full_columns = [None]*potential_width
         for x in range(len(self.agent_tetromino[rotation])): #for each row
@@ -200,6 +253,10 @@ class agent():
         return full_columns
             
     def calculate_tetromino_height(self, rotation):
+        """
+        Calculates the width of the current tetromino.
+        Finds out how many cells on the Y axis are actually filled.
+        """
         potential_height = len(self.agent_tetromino[rotation])
         full_rows = [None]*potential_height
         for x in range(len(self.agent_tetromino[rotation])):
