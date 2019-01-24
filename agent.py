@@ -164,16 +164,20 @@ class agent():
         """
         t = time.time()
         possible_placements = self.find_valid_placements()
-        rotation = random.randint(0,3) 
+        #Check which rotations still have valid placements
+        rotations_with_remaining_placements = []
+        for x in range(4):
+            if len(possible_placements[x]) > 0:
+                rotations_with_remaining_placements.append(x)
+                print("Valid placements: " + str(x) + ":" + str(len(possible_placements[x])))
+        if len(rotations_with_remaining_placements) == 0:
+            print("TODO: Add GameOver Functionality")
+        rotation = rotations_with_remaining_placements[random.randint(0, len(rotations_with_remaining_placements) - 1)]         
         number_of_placements = len(possible_placements[rotation])-1
         if number_of_placements == -1:
-            print("HELP!")
+            print("TODO: Add GameOver Functionality")
         placement_option = random.randint(0,number_of_placements)
         #rotation,height,column
-        x=possible_placements[rotation]
-        y=possible_placements[rotation][placement_option]
-        z=possible_placements[rotation][placement_option][0]
-        a=possible_placements[rotation][placement_option][0][2]
         placement = [rotation,possible_placements[rotation][placement_option][0][2],possible_placements[rotation][placement_option][0][1]]
         elapsed = time.time() - t
         print("Time Taken:" + str(elapsed))
@@ -219,6 +223,7 @@ class agent():
                                                     #moves up the placeable row   #the x-axis to place the tetromino
                     test_board.boardRepresentation[placeable_height - tet_height][column+tet_width] = test_board.boardRepresentation[placeable_height - tet_height][column+tet_width] + self.agent_tetromino[rotation][tetromino_height - tet_height][tet_width]
             
+            #Checks if the current position being tested allows for valid placement
             can_place = True
             for check_row in range(len(test_board.boardRepresentation)):
                 for check_column in range(len(test_board.boardRepresentation[check_row])):
@@ -227,6 +232,7 @@ class agent():
                         break
                 if can_place == False:
                     break
+            #Creates a list with data relating to placement
             if can_place == True:
                     coordinate_tag = []
                     coordinate_tag.append(rotation)

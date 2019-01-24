@@ -140,9 +140,6 @@ class Matris(object):
         
         pressed = lambda key: event.type == pygame.KEYDOWN and event.key == key
         unpressed = lambda key: event.type == pygame.KEYUP and event.key == key
-        
-        if self.agent_mode == True:
-                self.hard_drop()
 
         events = pygame.event.get()
         #Controls pausing and quitting the game.
@@ -404,8 +401,6 @@ class Matris(object):
         self.tetromino_position = (0,tetromino_placement[2])
         for rotations in range(tetromino_placement[0]):
             self.request_rotation()
-            
-        pygame.time.wait(100)
 
     def remove_lines(self):
         """
