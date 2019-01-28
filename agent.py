@@ -97,6 +97,16 @@ class board():
     def get_holes(self):
         return sum(self.holes_per_column)
     
+    def skyline_occuppied(self):
+        """
+        Checks if the top two rows of the board representation is occupied, which signals that the skyline is occupied.
+        Returns true if occupied;false if unoccupied. 
+        """
+        for x in range (len(self.boardRepresentation[0])): #[0] and [1] will always be the same length
+            if self.boardRepresentation[0][x] or self.boardRepresentation[1][x] == 1:
+                return True
+        return False
+    
 class agent():
     """
     Agent that will learn to play Tetris.
