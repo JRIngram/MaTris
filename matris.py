@@ -398,6 +398,8 @@ class Matris(object):
         self.agent.set_agent_tetromino(self.current_tetromino)
         self.agent.set_current_board(self.board)
         tetromino_placement = self.agent.choose_random_tetromino_placement()
+        if tetromino_placement == False:
+            self.gameover()
         self.tetromino_position = (0,tetromino_placement[2])
         for rotations in range(tetromino_placement[0]):
             self.request_rotation()

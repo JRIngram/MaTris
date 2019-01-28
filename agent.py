@@ -171,8 +171,14 @@ class agent():
     def choose_random_tetromino_placement(self):
         """
         Chooses a random valid placement on the Tetris board to place a tetromino
+        Returns false if agent declares a GameOver scenario
         """
         t = time.time()
+        if self.current_board.skyline_occuppied() == True:
+            print("Game Over: Skyline occupied")
+            elapsed = time.time() - t
+            print("Time Taken:" + str(elapsed))
+            return False
         possible_placements = self.find_valid_placements()
         #Check which rotations still have valid placements
         rotations_with_remaining_placements = []
@@ -181,11 +187,17 @@ class agent():
                 rotations_with_remaining_placements.append(x)
                 print("Valid placements: " + str(x) + ":" + str(len(possible_placements[x])))
         if len(rotations_with_remaining_placements) == 0:
-            print("TODO: Add GameOver Functionality")
+            print("Game Over: No rotations with remaining placements.")
+            elapsed = time.time() - t
+            print("Time Taken:" + str(elapsed))
+            return False
         rotation = rotations_with_remaining_placements[random.randint(0, len(rotations_with_remaining_placements) - 1)]         
         number_of_placements = len(possible_placements[rotation])-1
-        if number_of_placements == -1:
-            print("TODO: Add GameOver Functionality")
+        if number_of_placements < 0:
+            print("Game Over: Rotation with no remaining placements chosen.")
+            elapsed = time.time() - t
+            print("Time Taken:" + str(elapsed))
+            return False
         placement_option = random.randint(0,number_of_placements)
         #rotation,height,column
         placement = [rotation,possible_placements[rotation][placement_option][0][2],possible_placements[rotation][placement_option][0][1]]
@@ -281,6 +293,7 @@ class agent():
                    full_rows[y] = 1
              #TODO Add break once full_rows is full?
         return full_rows
+            
             
     
     
