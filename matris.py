@@ -154,10 +154,13 @@ class Matris(object):
 
         if self.paused:
             return self.needs_redraw
-
+        
+        if self.agent_mode == True:
+            self.hard_drop()
+        
         for event in events:
             #Controls movement of the tetromino
-            if pressed(pygame.K_SPACE) or self.agent_mode == True:
+            if pressed(pygame.K_SPACE):
                 self.hard_drop()
             elif pressed(pygame.K_UP) or pressed(pygame.K_w):
                 self.request_rotation()
