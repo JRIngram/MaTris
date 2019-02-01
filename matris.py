@@ -41,11 +41,14 @@ VISIBLE_MATRIX_HEIGHT = MATRIX_HEIGHT - 2
 
 class Matris(object):
     
-    board = agent.board()
-    agent = agent.agent()
-    agent_mode = True #used to check if agent is playing. Causes hard-drops to always happen.
-    
     def __init__(self):
+        self.agent_mode = True #used to check if agent is playing. Causes hard-drops to always happen.
+        if self.agent_mode == True:
+            self.board = agent.board()
+            self.agent = agent.agent()
+            self.episodes = 1
+            self.current_epsiode = 1
+        
         self.surface = screen.subsurface(Rect((MATRIS_OFFSET+BORDERWIDTH, MATRIS_OFFSET+BORDERWIDTH),
                                               (MATRIX_WIDTH * BLOCKSIZE, (MATRIX_HEIGHT-2) * BLOCKSIZE)))
 
@@ -62,19 +65,6 @@ class Matris(object):
 
         self.next_tetromino = random.choice(list_of_tetrominoes)
         self.set_tetrominoes()
-        
-        #Creates a reperesentation of the initial board
-        self.board.update_board_representation(self.create_board_representation())
-        self.board.set_board_height()
-        self.board.set_holes()
-        print(str(self.board))
-        print("Board Height: " + str(self.board.get_board_height()))
-        print("Cumulative Height: " + str(self.board.get_cum_height()))
-        print("Holes: " + str(self.board.get_holes()))
-        
-        #Set up the the agent
-        self.agent.set_current_board(self.board)
-        self.agent.set_agent_tetromino(self.current_tetromino)
         
         self.tetromino_rotation = 0
         self.downwards_timer = 0
@@ -100,11 +90,25 @@ class Matris(object):
         self.linescleared_sound = get_sound("linecleared.wav")
         self.highscorebeaten_sound = get_sound("highscorebeaten.wav")
         
-        #Agent's first move
-        tetromino_placement = self.agent.choose_random_tetromino_placement()
-        self.tetromino_position = (0,tetromino_placement[2])
-        for rotations in range(tetromino_placement[0]):
-            self.request_rotation()
+        if self.agent_mode == True:
+            #Creates a representation of the initial board
+            self.board.update_board_representation(self.create_board_representation())
+            self.board.set_board_height()
+            self.board.set_holes()
+            print(str(self.board))
+            print("Board Height: " + str(self.board.get_board_height()))
+            print("Cumulative Height: " + str(self.board.get_cum_height()))
+            print("Holes: " + str(self.board.get_holes()))
+        
+            #Set up the the agent
+            self.agent.set_current_board(self.board)
+            self.agent.set_agent_tetromino(self.current_tetromino)  
+        
+            #Agent's first move
+            tetromino_placement = self.agent.choose_random_tetromino_placement()
+            self.tetromino_position = (0,tetromino_placement[2])
+            for rotations in range(tetromino_placement[0]):
+                self.request_rotation()
 
 
     def set_tetrominoes(self):
@@ -384,25 +388,26 @@ class Matris(object):
         
         self.needs_redraw = True
         
-        #self.tetromino_position = (0,0)
-        #Collects information from the board.
-        self.board.update_board_representation(self.create_board_representation())
-        self.board.set_board_height()
-        self.board.set_holes()
-        print(str(self.board))
-        print("Board Height: " + str(self.board.get_board_height()))
-        print("Cumulative Height: " + str(self.board.get_cum_height()))
-        print("Holes: " + str(self.board.get_holes()))
+        if self.agent_mode == True:  
+            #Collects information from the board.
+            self.board.update_board_representation(self.create_board_representation())
+            self.board.set_board_height()
+            self.board.set_holes()
+            print(str(self.board))
+            print("Board Height: " + str(self.board.get_board_height()))
+            print("Cumulative Height: " + str(self.board.get_cum_height()))
+            print("Holes: " + str(self.board.get_holes()))
         
-        #Passes tetromino and board information to the agent.
-        self.agent.set_agent_tetromino(self.current_tetromino)
-        self.agent.set_current_board(self.board)
-        tetromino_placement = self.agent.choose_random_tetromino_placement()
-        if tetromino_placement == False:
-            self.gameover()
-        self.tetromino_position = (0,tetromino_placement[2])
-        for rotations in range(tetromino_placement[0]):
-            self.request_rotation()
+            #Passes tetromino and board information to the agent.
+            self.agent.set_agent_tetromino(self.current_tetromino)
+            self.agent.set_current_board(self.board)
+            #Agent chooses a column to place tetromino or declares a game over.
+            tetromino_placement = self.agent.choose_random_tetromino_placement()
+            if tetromino_placement == False:
+                self.gameover()
+                self.tetromino_position = (0,tetromino_placement[2])
+                for rotations in range(tetromino_placement[0]):
+                    self.request_rotation()
 
     def remove_lines(self):
         """
