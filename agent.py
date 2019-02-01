@@ -114,9 +114,12 @@ class agent():
     """
     agent_tetromino = []
     current_board = None
+    number_of_episodes = 1
+    current_episode=1
     
-    def __init__(self, tetromino=[]):
+    def __init__(self, tetromino=[], episodes=1):
         self.agent_tetromino = tetromino
+        self.episodes = episodes
     
     def set_agent_tetromino(self, tetromino):
         """
@@ -293,7 +296,15 @@ class agent():
                    full_rows[y] = 1
              #TODO Add break once full_rows is full?
         return full_rows
-            
+    
+    def get_current_episode(self):
+        return self.current_episode
+    
+    def get_number_of_episodes(self):
+        return self.episodes
+    
+    def complete_episode(self):
+        self.current_episode = self.current_episode + 1
             
     
     

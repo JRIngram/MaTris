@@ -38,11 +38,10 @@ TRICKY_CENTERX = WIDTH-(WIDTH-(MATRIS_OFFSET+BLOCKSIZE*MATRIX_WIDTH+BORDERWIDTH*
 
 VISIBLE_MATRIX_HEIGHT = MATRIX_HEIGHT - 2
 
-
 class Matris(object):
     
     board = agent.board()
-    agent = agent.agent()
+    agent = agent.agent([],100)
     agent_mode = True #used to check if agent is playing. Causes hard-drops to always happen.
     
     def __init__(self):
@@ -230,7 +229,20 @@ class Matris(object):
         if full_exit:
             exit()
         else:
-            raise GameOver("Sucker!")
+            if self.agent_mode == True:
+                if self.agent.get_current_episode() < self.agent.get_number_of_episodes():
+                    #Clears the board
+                    for y in range(MATRIX_HEIGHT):
+                        for x in range(MATRIX_WIDTH):
+                            self.matrix[(y,x)] = None
+                    self.score = 0
+                    self.lines = 0
+                    self.agent.complete_episode()
+                    self.board.update_board_representation(self.create_board_representation())
+                else:
+                    exit()
+            else:
+                raise GameOver("Sucker!")
 
     def place_shadow(self):
         """
@@ -398,11 +410,14 @@ class Matris(object):
         self.agent.set_agent_tetromino(self.current_tetromino)
         self.agent.set_current_board(self.board)
         tetromino_placement = self.agent.choose_random_tetromino_placement()
+        episode_ended = False
         if tetromino_placement == False:
             self.gameover()
-        self.tetromino_position = (0,tetromino_placement[2])
-        for rotations in range(tetromino_placement[0]):
-            self.request_rotation()
+            episode_ended = True
+        if episode_ended == False:
+            self.tetromino_position = (0,tetromino_placement[2])
+            for rotations in range(tetromino_placement[0]):
+                self.request_rotation()
 
     def remove_lines(self):
         """
