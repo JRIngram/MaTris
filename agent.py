@@ -289,8 +289,11 @@ class agent():
         full_rows = [None]*potential_height
         for x in range(len(self.agent_tetromino[rotation])):
             for y in range(len(self.agent_tetromino[rotation][0])):
-                if self.agent_tetromino[rotation][y][x] == 1:
-                    full_rows[y] = 1
-                    #TODO Add break once full_rows is full?
+               if self.agent_tetromino[rotation][y][x] == 1:
+                   full_rows[y] = 1
+             #TODO Add break once full_rows is full?
         return full_rows
+            
+            
+    
     
