@@ -2,7 +2,7 @@
 Module used to create a Tetris playing agent
 Created by JRIngram 
 """
-import copy, time, random
+import copy, time, random, csv
 
 class board():
     """
@@ -19,8 +19,6 @@ class board():
     def __init__(self, boardRepresentation=[]):
         self.boardRepresentation = boardRepresentation
         
-    
-
     def update_board_representation(self, boardRepresentation):
         """
         Creates an update board representation
@@ -115,7 +113,8 @@ class agent():
     agent_tetromino = []
     current_board = None
     number_of_episodes = 1
-    current_episode=1
+    current_episode=0
+    lines_cleared = 0
     
     def __init__(self, tetromino=[], episodes=1):
         self.agent_tetromino = tetromino
@@ -304,7 +303,21 @@ class agent():
         return self.episodes
     
     def complete_episode(self):
+        self.write_results_to_csv()
         self.current_episode = self.current_episode + 1
-            
+        
+    def set_lines_cleared(self, lines_cleared):
+        self.lines_cleared = lines_cleared
+    
+    def write_results_to_csv(self):
+        """
+        Called at the end of an episode, this appends the episode number and 
+        number of lines cleared to the file results.csv
+        """
+        episode_results = [str(self.current_episode),str(self.lines_cleared)]
+        with open('results.csv', 'a') as results:
+            writer = csv.writer(results)
+            writer.writerow(episode_results)
+            results.close()
     
     
