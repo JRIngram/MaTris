@@ -43,6 +43,8 @@ class Matris(object):
     board = agent.board()
     agent = agent.agent([],100)
     agent_mode = True #used to check if agent is playing. Causes hard-drops to always happen.
+    seed = agent.load_new_seed()
+    random.seed(seed)
     
     def __init__(self):
         self.surface = screen.subsurface(Rect((MATRIS_OFFSET+BORDERWIDTH, MATRIS_OFFSET+BORDERWIDTH),
@@ -235,6 +237,8 @@ class Matris(object):
             exit()
         else:
             if self.agent_mode == True:
+                self.agent.complete_episode()
+                #Manages the starting of a new game
                 if self.agent.get_current_episode() < self.agent.get_number_of_episodes():
                     #Clears the board
                     for y in range(MATRIX_HEIGHT):
@@ -242,8 +246,20 @@ class Matris(object):
                             self.matrix[(y,x)] = None
                     self.score = 0
                     self.lines = 0
-                    self.agent.complete_episode()
                     self.board.update_board_representation(self.create_board_representation())
+                    if self.agent.current_episode == 99:
+                        x=1
+                    new_seed = self.agent.load_new_seed()
+                    if new_seed == None:
+                        try:
+                            raise ValueError("Not enough seeds for current experiment!");
+                        except:
+                            print("\nNot enough seeds for current experiment!\nExiting Matris...")
+                            exit()
+                    print("Generating new game with seed: " + str(new_seed))
+                    random.seed(new_seed)
+                    self.next_tetromino = random.choice(list_of_tetrominoes)
+                    self.set_tetrominoes()
                 else:
                     exit()
             else:
