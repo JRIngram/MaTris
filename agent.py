@@ -344,4 +344,68 @@ class agent():
                 if int(seed[0]) == self.current_episode:
                     return seed[1]
     
+    def trim_tetromino(self,tetromino, rotation):
+        """
+        Removes empty rows and columns from a tetromino with a specific rotation
+        Returns both the number of left columns trimmed and the trimmed tetromino
+        The number of left columns trimmed is used in additional calculations as to where the tetromino should be placed.
+        """
+        trimmed_tetromino = copy.deepcopy(tetromino[rotation])
+        tetromino_matrix_height = len(trimmed_tetromino)
+        tetromino_matrix_width = len(trimmed_tetromino[0])
+
+        trimming_left = True
+        trimming_right = False
+        left_columns_trimmed = 0
+        right_columns_trimmed = 0
+        columns_trimmed = 0
+        loop_without_trim = False
+        
+        #Trim empty columns
+        while loop_without_trim == False:
+            """
+            Loops through rows within columns and lists cell values within each column.
+            If a column is "empty" i.e. full of 0s then the cell is removed and the loop process is restarted.
+            This continues until the tetromino is looped through without trimming
+            """
+            loop_without_trim = True
+            for x in range(len(trimmed_tetromino[0])):
+    
+                column = []
+                for y in range(tetromino_matrix_height):
+                    column.append(trimmed_tetromino[y][x])
+                if 1 not in column:
+                    loop_without_trim = False
+                    columns_trimmed = columns_trimmed + 1
+                    if trimming_left == True:
+                        left_columns_trimmed = left_columns_trimmed + 1
+                    else:
+                        right_columns_trimmed = right_columns_trimmed + 1
+                    for y in range(tetromino_matrix_height):
+                        trimmed_tetromino[y].pop(x)
+                    break
+                if 1 in column and trimming_left == True and trimming_right == False:
+                    trimming_left = False
+                    trimming_right = False
+        
+        #Trim empty rows
+        loop_without_trim = False
+        while loop_without_trim == False:
+                """
+                Loops through cells within row and lists cell values within each row.
+                If a row is "empty" i.e. full of 0s then the cell is removed and the loop process is restarted.
+                This continues until the tetromino is looped through without trimming
+                """
+                loop_without_trim = True
+                for x in range(len(trimmed_tetromino)):
+                    row = []
+                    for y in range(len(trimmed_tetromino[0])):
+                        row.append(trimmed_tetromino[x][y])
+                    if 1 not in row:
+                        loop_without_trim = False 
+                        trimmed_tetromino.pop(x)
+                        break
+        
+        return trimmed_tetromino, left_columns_trimmed
+        
     
