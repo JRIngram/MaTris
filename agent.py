@@ -219,6 +219,7 @@ class agent():
         elapsed = time.time() - t
         #Check if top two rows filled
         print("Time Taken:" + str(elapsed))
+        placement[2] = placement[2] - possible_placements[rotation][placement_option][0][3] #Corrects column placement after trimming
         return placement
         
         
@@ -278,6 +279,7 @@ class agent():
                     coordinate_tag.append(rotation)
                     coordinate_tag.append(column)
                     coordinate_tag.append(placeable_height)
+                    coordinate_tag.append(left_trimmed)
                     placeable_position = []
                     placeable_position.append(coordinate_tag)
                     placeable_position.append(test_board)
