@@ -203,7 +203,21 @@ class agent():
         placement_option = random.randint(0,number_of_placements)
         #rotation,height,column
         placement = [rotation,possible_placements[rotation][placement_option][0][2],possible_placements[rotation][placement_option][0][1]]
+        
+        #Checks if top two columns are filled by the chosen placement
+        self.chosen_board_representation = []
+        for option in range(len(possible_placements[placement[0]])):
+            if possible_placements[placement[0]][option][0][1] == placement[2]:
+                self.chosen_board_representation = possible_placements[placement[0]][option][1].boardRepresentation
+                break
+                
+        if 1 in self.chosen_board_representation[0] or 1 in self.chosen_board_representation[0]:
+            print("Game Over: Option chosen where skyline occupied")
+            elapsed = time.time() - t
+            print("Time Taken:" + str(elapsed))
+            return False
         elapsed = time.time() - t
+        #Check if top two rows filled
         print("Time Taken:" + str(elapsed))
         return placement
         
@@ -227,25 +241,27 @@ class agent():
         Searches the board for valid placements for a rotation of a tetromino
         This is performed 4 times. Once for each tetromino.
         """
+
         column_heights = self.current_board.column_heights
-        tetromino = self.agent_tetromino
+        tetromino, left_trimmed = self.trim_tetromino(self.agent_tetromino,rotation)
         tetromino_width_stats = self.calculate_tetromino_width(rotation)
         tetromino_height_stats = self.calculate_tetromino_height(rotation)
         #Need to trim None values and find empty column get a more realistic shape of the tetromino
-        tetromino_width = len(tetromino_width_stats)
-        tetromino_height = len(tetromino_width_stats) -1
+        tetromino_width = len(tetromino[0])
+        tetromino_height = len(tetromino) - 1 
                 
         #Calculate rows below full cell
         
         #Check column height and for each column
         valid_placements = []
-        for column in range(len(column_heights)-(tetromino_width-1)):
-            test_board = copy.deepcopy(self.current_board)
-            placeable_height = 21 - column_heights[column]
-            for tet_height in range(tetromino_height+1): #for each row in the tetromino
+        for column in range(len(column_heights)-(tetromino_width-1)): #For each column
+            test_board = copy.deepcopy(self.current_board) #Create copy of board
+            placeable_height = 21 - column_heights[column] #For the current column, what height can the tetromino be placed at
+            for tet_height in range(tetromino_height + 1): #for each row in the tetromino
                 for tet_width in range(tetromino_width): #for each column in tetromino
                                                     #moves up the placeable row   #the x-axis to place the tetromino
-                    test_board.boardRepresentation[placeable_height - tet_height][column+tet_width] = test_board.boardRepresentation[placeable_height - tet_height][column+tet_width] + self.agent_tetromino[rotation][tetromino_height - tet_height][tet_width]
+                                                      
+                    test_board.boardRepresentation[placeable_height - tet_height][column+tet_width] = test_board.boardRepresentation[placeable_height - tet_height][column+tet_width] + tetromino[tetromino_height - tet_height][tet_width]
             
             #Checks if the current position being tested allows for valid placement
             can_place = True
