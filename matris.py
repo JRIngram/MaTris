@@ -69,9 +69,11 @@ class Matris(object):
             self.board.update_board_representation(self.create_board_representation())
             self.board.set_board_height()
             self.board.set_holes()
+            self.board.set_column_differences()
             print(str(self.board))
             print("Board Height: " + str(self.board.get_board_height()))
             print("Cumulative Height: " + str(self.board.get_cum_height()))
+            print("Column Height Differences:" + str(self.board.column_differences))
             print("Holes: " + str(self.board.get_holes()))
             
             #Set up the the agent
@@ -424,9 +426,11 @@ class Matris(object):
             self.board.update_board_representation(self.create_board_representation())
             self.board.set_board_height()
             self.board.set_holes()
+            self.board.set_column_differences()
             print(str(self.board))
             print("Board Height: " + str(self.board.get_board_height()))
             print("Cumulative Height: " + str(self.board.get_cum_height()))
+            print("Column Height Differences:" + str(self.board.column_differences))
             print("Holes: " + str(self.board.get_holes()))
             
             #Passes tetromino and board information to the agent.

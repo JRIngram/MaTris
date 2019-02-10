@@ -15,6 +15,7 @@ class board():
     cum_height = 0 #Cumulative height of the board
     column_heights = 0
     holes_per_column = []
+    column_differences = []
     
     def __init__(self, boardRepresentation=[]):
         self.boardRepresentation = boardRepresentation
@@ -104,6 +105,27 @@ class board():
             if self.boardRepresentation[0][x] or self.boardRepresentation[1][x] == 1:
                 return True
         return False
+    
+    def set_column_differences(self):
+        """
+        Calculates the difference in height between a column and the column to the left of it.
+        This is calculate for all columns and then returned as a list.
+        """
+        column_heights = [];
+        for x in range(len(self.boardRepresentation[0])): #Number of columns
+            for y in range (len(self.boardRepresentation)): #Number of rows
+                if(self.boardRepresentation[y][x] == 1):
+                    column_heights.append(22 - y) #Matris height is 22
+                    break
+                elif(y == 21): #Column is empty
+                    column_heights.append(0)
+        column_differences = [0] * len(column_heights)
+        for x in range(len(column_heights)):
+            if x == 0:
+                column_differences[x] = 0
+            else:
+                column_differences[x] = column_heights[x-1] - column_heights[x]
+        self.column_differences = column_differences
     
 class agent():
     """
