@@ -27,8 +27,6 @@ An artificial intelligence mode is currently being created. This mode is ran by 
 
 The logic of this mostly resides in `agent.py` although modifcations have been made to `matris.py` to allow for the agent to interact with the game.
 
-![agent.py UML Diagram](agent_uml.jpg)
-
 ## Random Mode
 Currently the `agent_mode` only causes the agent to randomly place blocks, with little intelligence. This will be built upon in future, but for now acts as a proof of concept in that it proves that tetromino placement can be controlled by an agent and valid placements can be found.
 
@@ -38,3 +36,5 @@ This class acts as a representation of the current Tetris board and stores vario
 
 ### agent
 This stores the current tetromino and a representation of the board. It then uses the information it has about the current game state to make a choice about where to place the current tetromino.
+
+![agent.py UML Diagram](agent_uml.jpg)
