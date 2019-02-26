@@ -394,8 +394,6 @@ class Matris(object):
 
         lines_cleared = self.remove_lines()
         self.lines += lines_cleared
-        if self.agent_mode == True:
-            self.agent.set_lines_cleared(self.lines)
 
         if lines_cleared:
             if lines_cleared >= 4:
@@ -416,12 +414,12 @@ class Matris(object):
         self.set_tetrominoes()
 
         if not self.blend():
-            self.gameover_sound.play()
+            #self.gameover_sound.play()
             self.gameover()
         
         self.needs_redraw = True
         
-        if self.agent_mode == True:
+        if self.agent_mode == True:          
             #Collects information from the board.
             self.board.update_board_representation(self.create_board_representation())
             self.board.set_board_height()
@@ -432,16 +430,29 @@ class Matris(object):
             print("Cumulative Height: " + str(self.board.get_cum_height()))
             print("Column Height Differences:" + str(self.board.column_differences))
             print("Holes: " + str(self.board.get_holes()))
+                     
             
             #Passes tetromino and board information to the agent.
             self.agent.set_agent_tetromino(self.current_tetromino)
             self.agent.set_current_board(self.board)
+            
+            #Remembers previous S,A,R,S
+            self.agent.set_lines_cleared(self.lines)
+            reward = self.agent.update_score(self.score)
             tetromino_placement = self.agent.make_move()
             episode_ended = False
             if tetromino_placement == False:
+                #End of episode
+                if self.agent.random_moves == False:
+                    self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, reward, self.agent.get_current_board(), True)
+                    self.agent.update_approximater()
                 self.gameover()
                 episode_ended = True
-            if episode_ended == False :
+            if episode_ended == False:
+                #Continue episode
+                if self.agent.random_moves == False:
+                    self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, reward, self.agent.get_current_board(), False)
+                    self.agent.update_approximater()
                 self.tetromino_position = (0,tetromino_placement[2])
                 for rotations in range(tetromino_placement[0]):
                     self.request_rotation()

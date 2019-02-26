@@ -142,6 +142,7 @@ class agent():
     number_of_episodes = 1
     current_episode=0
     lines_cleared = 0
+    score = 0
     
     #Determines how moves are made
     random_moves = True
@@ -157,7 +158,11 @@ class agent():
     reset_steps = 0 
     random_moves = True
     
-    def __init__(self, tetromino=[], episodes=1, random_moves=True, epsilon=0.1, discount=0.99,  epsilon_decay=0, memory_size=0, sample_size=50, reset_steps=1000):
+    #Used for state action recording
+    previous_state = None
+    previous_action = None
+    
+    def __init__(self, tetromino=[], episodes=1, random_moves=True, epsilon=0.1, discount=0.99,  epsilon_decay=0, memory_size=1000, sample_size=50, reset_steps=1000):
         self.agent_tetromino = tetromino
         self.number_of_episodes = episodes
         self.rand = random.Random(self.load_new_seed())
@@ -233,12 +238,35 @@ class agent():
         """
         self.current_board = board  
     
+    def get_current_board(self):
+        return self.current_board
+    
     def make_move(self):
-        if self.random_moves == True:
-            placement = self.choose_random_tetromino_placement()
+        game_over = self.check_game_over()
+        if game_over == False:
+            if self.random_moves == True:
+                placement = self.choose_random_tetromino_placement()
+                return placement
+            else:
+                placement = self.dqn_move()
+                return placement
         else:
-            placement = self.dqn_move()
-        return placement
+            return False
+    
+    def check_game_over(self):
+        if self.current_board.skyline_occuppied() == True:
+            print("Game Over: Skyline occupied")
+            return True
+        possible_placements = self.find_valid_placements()
+        rotations_with_remaining_placements = []
+        for x in range(4):
+            if len(possible_placements[x]) > 0:
+                rotations_with_remaining_placements.append(x)
+        if len(rotations_with_remaining_placements) == 0:
+            print("Game Over: No rotations with remaining placements.")
+            return True
+        
+        return False
         
     def choose_random_tetromino_placement(self):
         """
@@ -246,11 +274,6 @@ class agent():
         Returns false if agent declares a GameOver scenario
         """
         t = time.time()
-        if self.current_board.skyline_occuppied() == True:
-            print("Game Over: Skyline occupied")
-            elapsed = time.time() - t
-            print("Time Taken:" + str(elapsed))
-            return False
         possible_placements = self.find_valid_placements()
         #Check which rotations still have valid placements
         rotations_with_remaining_placements = []
@@ -258,11 +281,6 @@ class agent():
             if len(possible_placements[x]) > 0:
                 rotations_with_remaining_placements.append(x)
                 print("Valid placements: " + str(x) + ":" + str(len(possible_placements[x])))
-        if len(rotations_with_remaining_placements) == 0:
-            print("Game Over: No rotations with remaining placements.")
-            elapsed = time.time() - t
-            print("Time Taken:" + str(elapsed))
-            return False
         rotation = rotations_with_remaining_placements[random.randint(0, len(rotations_with_remaining_placements) - 1)]         
         number_of_placements = len(possible_placements[rotation])-1
         if number_of_placements < 0:
@@ -294,14 +312,12 @@ class agent():
         
     def dqn_move(self):
         choose_optimal = self.rand.random()
+        tetromino_input = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
+        for tetromino_height in range(0, len(self.agent_tetromino[0])):
+            for tetromino_width in range (0, len(self.agent_tetromino[0][tetromino_height])):
+                tetromino_input[tetromino_height][tetromino_width] = self.agent_tetromino[0][tetromino_height][tetromino_width]
         if choose_optimal > self.epsilon:
-            possible_actions = self.find_valid_placements()
-            tetromino_input = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
-            for tetromino_height in range(0, len(self.agent_tetromino[0])):
-                for tetromino_width in range (0, len(self.agent_tetromino[0][tetromino_height])):
-                    tetromino_input[tetromino_height][tetromino_width] = self.agent_tetromino[0][tetromino_height][tetromino_width]
-                   
-            
+            possible_actions = self.find_valid_placements()     
             for x in range(0,len(possible_actions)): 
                 for y in range(0,len(possible_actions[x])):
                     state_action = np.array([[  #Tetromino being used
@@ -329,6 +345,20 @@ class agent():
                         placement = [chosen_placement[0][0], chosen_placement[0][2] ,chosen_placement[0][1]]
         else:
             placement = self.choose_random_tetromino_placement()
+        
+        previous_column_diffs = copy.deepcopy(self.current_board)
+        self.previous_state = [#Tetromino being used
+                                tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
+                                tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
+                                tetromino_input[2][0],tetromino_input[2][1],tetromino_input[2][2],tetromino_input[2][3],
+                                tetromino_input[3][0],tetromino_input[3][1],tetromino_input[3][2],tetromino_input[3][3],
+                                #Current state of the board (differences in column height) being stored to record S,A,R,S
+                                previous_column_diffs[0],previous_column_diffs[1],
+                                previous_column_diffs[2],previous_column_diffs[3],
+                                previous_column_diffs[4],previous_column_diffs[5],
+                                previous_column_diffs[6],previous_column_diffs[7],
+                                previous_column_diffs[8],previous_column_diffs[9]]
+        self.previous_action = copy.deepcopy(placement)
         return placement
     
     def query(self, state_action, current_net=True):
@@ -452,6 +482,7 @@ class agent():
         """
         self.write_results_to_csv()
         self.current_episode = self.current_episode + 1
+        self.score = 0
         
     def set_lines_cleared(self, lines_cleared):
         """
