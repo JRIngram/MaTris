@@ -3,10 +3,11 @@ Module used to create a Tetris playing agent
 Created by JRIngram 
 """
 import copy, time, random, csv
-import tensorflow as tf
 import keras
 from keras.models import Sequential
 from keras.layers import Dense
+import tensorflow as tf
+import numpy as np
 
 class board():
     """
@@ -159,7 +160,7 @@ class agent():
     def __init__(self, tetromino=[], episodes=1, random_moves=True, epsilon=0.1, discount=0.99,  epsilon_decay=0, memory_size=0, sample_size=50, reset_steps=1000):
         self.agent_tetromino = tetromino
         self.number_of_episodes = episodes
-        self.rand = random.Random()
+        self.rand = random.Random(self.load_new_seed())
         self.random_moves = random_moves
         
         self.epsilon = epsilon
@@ -172,7 +173,8 @@ class agent():
                 
         #Initialize action-value function Q with random weights
         self.current_net = Sequential()
-        self.current_net.add(Dense(3, input_dim=4, activation='tanh'))
+        #30 inputs, one for each possible tetromino cell and one for each column height difference, 4 for inputs 
+        self.current_net.add(Dense(3, input_dim=28, activation='tanh'))
         self.current_net.add(Dense(1, activation='linear'))
         self.current_net.compile(loss='mean_squared_error',
               optimizer='adam',
@@ -234,6 +236,8 @@ class agent():
     def make_move(self):
         if self.random_moves == True:
             placement = self.choose_random_tetromino_placement()
+        else:
+            placement = self.dqn_move()
         return placement
         
     def choose_random_tetromino_placement(self):
@@ -288,7 +292,57 @@ class agent():
         placement[2] = placement[2] - possible_placements[rotation][placement_option][0][3] #Corrects column placement after trimming
         return placement
         
-        
+    def dqn_move(self):
+        choose_optimal = self.rand.random()
+        if choose_optimal > self.epsilon:
+            possible_actions = self.find_valid_placements()
+            tetromino_input = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
+            for tetromino_height in range(0, len(self.agent_tetromino[0])):
+                for tetromino_width in range (0, len(self.agent_tetromino[0][tetromino_height])):
+                    tetromino_input[tetromino_height][tetromino_width] = self.agent_tetromino[0][tetromino_height][tetromino_width]
+                   
+            
+            for x in range(0,len(possible_actions)): 
+                for y in range(0,len(possible_actions[x])):
+                    state_action = np.array([[  #Tetromino being used
+                                                tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
+                                                tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
+                                                tetromino_input[2][0],tetromino_input[2][1],tetromino_input[2][2],tetromino_input[2][3],
+                                                tetromino_input[3][0],tetromino_input[3][1],tetromino_input[3][2],tetromino_input[3][3],
+                                                #Current state of the board (differences in column height
+                                                self.current_board.column_differences[0],self.current_board.column_differences[1],
+                                                self.current_board.column_differences[2],self.current_board.column_differences[3],
+                                                self.current_board.column_differences[4],self.current_board.column_differences[5],
+                                                self.current_board.column_differences[6],self.current_board.column_differences[7],
+                                                self.current_board.column_differences[8],self.current_board.column_differences[9],
+                                                #Action to be taken: rotation, column
+                                                possible_actions[x][y][0][0], possible_actions[x][y][0][1]                                
+                                            ]])
+                    possible_actions[x][y][0].append(self.query(state_action))
+            chosen_placement = possible_actions[0][0]
+            placement = [chosen_placement[0][0], chosen_placement[0][2], chosen_placement[0][1] - - chosen_placement[0][3]]
+            #Choose optimal move
+            for x in range(0,len(possible_actions)): 
+                for y in range(0,len(possible_actions[x])):
+                    if possible_actions[x][y][0][4] > chosen_placement[0][4]:
+                        chosen_placement = possible_actions[x][y]
+                        placement = [chosen_placement[0][0], chosen_placement[0][2] ,chosen_placement[0][1]]
+        else:
+            placement = self.choose_random_tetromino_placement()
+        return placement
+    
+    def query(self, state_action, current_net=True):
+        """
+        Returns a predicted value for a state-action pair.
+        If current_net is true then the current_net is used for this prediction.
+        If current_net is false then the target_net is used for this prediction.
+        """
+        if(current_net == True):
+            value_prediction = self.current_net.predict(state_action, batch_size=1)[0,0]
+        else:
+            value_prediction = self.target_net.predict(state_action, batch_size=1)[0,0]
+        return value_prediction
+    
     def find_valid_placements(self):
         """
         Searches the board for valid placements
