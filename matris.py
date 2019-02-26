@@ -106,7 +106,7 @@ class Matris(object):
         
         if self.agent_mode == True:
             #Agent's first move
-            tetromino_placement = self.agent.choose_random_tetromino_placement()
+            tetromino_placement = self.agent.make_move()
             self.tetromino_position = (0,tetromino_placement[2])
             for rotations in range(tetromino_placement[0]):
                 self.request_rotation()
@@ -436,7 +436,7 @@ class Matris(object):
             #Passes tetromino and board information to the agent.
             self.agent.set_agent_tetromino(self.current_tetromino)
             self.agent.set_current_board(self.board)
-            tetromino_placement = self.agent.choose_random_tetromino_placement()
+            tetromino_placement = self.agent.make_move()
             episode_ended = False
             if tetromino_placement == False:
                 self.gameover()

@@ -3,6 +3,10 @@ Module used to create a Tetris playing agent
 Created by JRIngram 
 """
 import copy, time, random, csv
+import tensorflow as tf
+import keras
+from keras.models import Sequential
+from keras.layers import Dense
 
 class board():
     """
@@ -138,9 +142,44 @@ class agent():
     current_episode=0
     lines_cleared = 0
     
-    def __init__(self, tetromino=[], episodes=1):
+    #Determines how moves are made
+    random_moves = True
+    rand = None
+    
+    #Variables used in DQN
+    epsilon=0
+    epsilon_decay=0
+    discount = 0
+    event_memory = []
+    memory_size = 0
+    sample_size = 0
+    reset_steps = 0 
+    random_moves = True
+    
+    def __init__(self, tetromino=[], episodes=1, random_moves=True, epsilon=0.1, discount=0.99,  epsilon_decay=0, memory_size=0, sample_size=50, reset_steps=1000):
         self.agent_tetromino = tetromino
         self.number_of_episodes = episodes
+        self.rand = random.Random()
+        self.random_moves = random_moves
+        
+        self.epsilon = epsilon
+        self.epsilon_decay = epsilon_decay
+        self.discount = discount
+        self.event_memory = []
+        self.memory_size = memory_size
+        self.sample_size = sample_size
+        self.reset_steps = reset_steps 
+                
+        #Initialize action-value function Q with random weights
+        self.current_net = Sequential()
+        self.current_net.add(Dense(3, input_dim=4, activation='tanh'))
+        self.current_net.add(Dense(1, activation='linear'))
+        self.current_net.compile(loss='mean_squared_error',
+              optimizer='adam',
+              metrics=['accuracy'])
+        
+        #Initialize target action-value function Q
+        self.target_net = copy.deepcopy(self.current_net)
     
     def set_agent_tetromino(self, tetromino):
         """
@@ -191,6 +230,11 @@ class agent():
         Sets the current board representation for the 
         """
         self.current_board = board  
+    
+    def make_move(self):
+        if self.random_moves == True:
+            placement = self.choose_random_tetromino_placement()
+        return placement
         
     def choose_random_tetromino_placement(self):
         """
