@@ -178,9 +178,10 @@ class agent():
                 
         #Initialize action-value function Q with random weights
         self.current_net = Sequential()
-        #30 inputs, one for each possible tetromino cell and one for each column height difference, 4 for inputs 
-        self.current_net.add(Dense(3, input_dim=28, activation='tanh'))
-        self.current_net.add(Dense(1, activation='linear'))
+        #26 inputs, one for each possible tetromino cell (4 * 4) and one for each column height difference
+        self.current_net.add(Dense(3, input_dim=26, activation='tanh'))
+        #40 outputs, one for each possible action: 10 columns * 4 rotations.
+        self.current_net.add(Dense(40, activation='linear'))
         self.current_net.compile(loss='mean_squared_error',
               optimizer='adam',
               metrics=['accuracy'])
@@ -314,39 +315,45 @@ class agent():
         choose_optimal = self.rand.random()
         tetromino_input = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
         for tetromino_height in range(0, len(self.agent_tetromino[0])):
+            #Fills the tetromino_input; used as part of the ANN input
             for tetromino_width in range (0, len(self.agent_tetromino[0][tetromino_height])):
                 tetromino_input[tetromino_height][tetromino_width] = self.agent_tetromino[0][tetromino_height][tetromino_width]
         if choose_optimal > self.epsilon:
             possible_actions = self.find_valid_placements()     
-            for x in range(0,len(possible_actions)): 
-                for y in range(0,len(possible_actions[x])):
-                    state_action = np.array([[  #Tetromino being used
-                                                tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
-                                                tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
-                                                tetromino_input[2][0],tetromino_input[2][1],tetromino_input[2][2],tetromino_input[2][3],
-                                                tetromino_input[3][0],tetromino_input[3][1],tetromino_input[3][2],tetromino_input[3][3],
-                                                #Current state of the board (differences in column height
-                                                self.current_board.column_differences[0],self.current_board.column_differences[1],
-                                                self.current_board.column_differences[2],self.current_board.column_differences[3],
-                                                self.current_board.column_differences[4],self.current_board.column_differences[5],
-                                                self.current_board.column_differences[6],self.current_board.column_differences[7],
-                                                self.current_board.column_differences[8],self.current_board.column_differences[9],
-                                                #Action to be taken: rotation, column
-                                                possible_actions[x][y][0][0], possible_actions[x][y][0][1]                                
-                                            ]])
-                    possible_actions[x][y][0].append(self.query(state_action))
-            chosen_placement = possible_actions[0][0]
-            placement = [chosen_placement[0][0], chosen_placement[0][2], chosen_placement[0][1] - - chosen_placement[0][3]]
+            state = np.array([[#Tetromino being used
+                                      tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
+                                      tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
+                                      tetromino_input[2][0],tetromino_input[2][1],tetromino_input[2][2],tetromino_input[2][3],
+                                      tetromino_input[3][0],tetromino_input[3][1],tetromino_input[3][2],tetromino_input[3][3],
+                                      #Current state of the board (differences in column height
+                                      self.current_board.column_differences[0],self.current_board.column_differences[1],
+                                      self.current_board.column_differences[2],self.current_board.column_differences[3],
+                                      self.current_board.column_differences[4],self.current_board.column_differences[5],
+                                      self.current_board.column_differences[6],self.current_board.column_differences[7],
+                                      self.current_board.column_differences[8],self.current_board.column_differences[9],                      
+                            ]])
+            predicted_values = self.query(state)
+            optimal_placement = None
+                        #rotation                #height                    #column - left trimmed
+            #placement = [optimal_placement[0][0], optimal_placement[0][2], optimal_placement[0][1] - - optimal_placement[0][3]]
             #Choose optimal move
-            for x in range(0,len(possible_actions)): 
-                for y in range(0,len(possible_actions[x])):
-                    if possible_actions[x][y][0][4] > chosen_placement[0][4]:
-                        chosen_placement = possible_actions[x][y]
-                        placement = [chosen_placement[0][0], chosen_placement[0][2] ,chosen_placement[0][1]]
+            for rotation in range(0,len(possible_actions)): 
+                for option in range(0,len(possible_actions[rotation])):
+                    #For each option for each rotation check the value
+                    #ISSUE ACCESSING DUE TO CHANGE IN ANN TOPOLOGY
+                    output_node = (rotation*10) + option #output node to retrieve the predicted value from.
+                    node_value = predicted_values[0][output_node]
+                    if optimal_placement == None:
+                        optimal_placement = [possible_actions[rotation][option][0], node_value]
+                    elif node_value > optimal_placement[1]:
+                        optimal_placement = [possible_actions[rotation][option][0], node_value]
+            #rotation,height,column (corrected by trim)
+            placement = [optimal_placement[0][0], optimal_placement[0][2], optimal_placement[0][1] - optimal_placement[0][3]]
+                        
         else:
             placement = self.choose_random_tetromino_placement()
         
-        previous_column_diffs = copy.deepcopy(self.current_board)
+        previous_column_diffs = copy.deepcopy(self.current_board.column_differences)
         self.previous_state = [#Tetromino being used
                                 tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
                                 tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
@@ -361,16 +368,16 @@ class agent():
         self.previous_action = copy.deepcopy(placement)
         return placement
     
-    def query(self, state_action, current_net=True):
+    def query(self, state, current_net=True):
         """
         Returns a predicted value for a state-action pair.
         If current_net is true then the current_net is used for this prediction.
         If current_net is false then the target_net is used for this prediction.
         """
         if(current_net == True):
-            value_prediction = self.current_net.predict(state_action, batch_size=1)[0,0]
+            value_prediction = self.current_net.predict(state, batch_size=1)
         else:
-            value_prediction = self.target_net.predict(state_action, batch_size=1)[0,0]
+            value_prediction = self.target_net.predict(state, batch_size=1)
         return value_prediction
     
     def find_valid_placements(self):
@@ -576,5 +583,11 @@ class agent():
                         break
         
         return trimmed_tetromino, left_columns_trimmed
+    
+    def update_score(self, score):
+        reward = score - self.score
+        self.score = score
+        return reward
+        
         
     
