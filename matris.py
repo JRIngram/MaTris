@@ -439,27 +439,25 @@ class Matris(object):
             
             #Remembers previous S,A,R,S
             self.agent.set_lines_cleared(self.lines)
-            starting_score = self.agent.score
             reward = self.agent.update_score(self.score)
-            if starting_score == 0:            #Remembers episode if first move
-                self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, reward, self.agent.get_current_board(), False)
-                self.agent.update_approximater()
-            elif self.agent.check_game_over():  #Ends episode if previous turn was terminal
+            if self.agent.check_game_over():  #Ends episode if previous turn was terminal
                 #End of episode
-                punishment = -1000 #Punishment for reaching a terminal state
                 if self.agent.random_moves == False:
+                    punishment = -1000 #Punishment for reaching a terminal state
                     self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, punishment, self.agent.get_current_board(), True)
                     self.agent.update_approximater()
                 self.gameover()
-            else:
-                #Continue episode as not in terminal state
+            else:   #Continue episode as not in terminal state
                 self.tetromino_placement = self.agent.make_move()
-                if self.agent.random_moves == False:
-                    self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, reward, self.agent.get_current_board(), False)
-                    self.agent.update_approximater()
-                self.tetromino_position = (0,self.tetromino_placement[2])
-                for rotations in range(self.tetromino_placement[0]):
-                    self.request_rotation()
+                if self.tetromino_placement == False: #TODO needs to handle game over properly - currently state not remembered and new board not remembered!
+                    self.gameover()
+                else:
+                    if self.agent.random_moves == False:
+                        self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, reward, self.agent.get_current_board(), False)
+                        self.agent.update_approximater()
+                    self.tetromino_position = (0,self.tetromino_placement[2])
+                    for rotations in range(self.tetromino_placement[0]):
+                        self.request_rotation()
 
     def remove_lines(self):
         """
@@ -550,7 +548,6 @@ class Game(object):
         Redraws scores and next tetromino each time the loop is passed through
         """
         clock = pygame.time.Clock()
-
         self.matris = Matris()
         
         screen.blit(construct_nightmare(screen.get_size()), (0,0))
