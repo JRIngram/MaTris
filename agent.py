@@ -157,6 +157,7 @@ class agent():
     sample_size = 0
     reset_steps = 0 
     random_moves = True
+    event_memory = None
     
     #Used for state action recording
     previous_state = None
@@ -173,6 +174,7 @@ class agent():
         self.discount = discount
         self.event_memory = []
         self.memory_size = memory_size
+        self.event_memory = []
         self.sample_size = sample_size
         self.reset_steps = reset_steps 
                 
@@ -585,9 +587,36 @@ class agent():
         return trimmed_tetromino, left_columns_trimmed
     
     def update_score(self, score):
+        """
+        Updates the Agent's score and returns the reward from the current update.
+        """
         reward = score - self.score
         self.score = score
         return reward
-        
+    
+    def remember_state_action(self,previous_state, previous_action, reward, new_board, terminal_state):
+        self.event_memory.append([previous_state, previous_action, reward, copy.deepcopy(new_board), terminal_state])
+        if len(self.event_memory) > self.memory_size:
+            self.event_memory.pop(0)
+    
+    def update_approximater(self):
+        """
+        Replays N memories.
+        Updates the current_net based on a target which is:
+            reward from the state (if terminal state)
+            Max predicted reward from next state (if non-terminal state)
+        Gradient descent is then performed on the current_net
+        """
+        if len(self.event_memory) < self.sample_size:
+            memory_samples = random.sample(self.event_memory, len(self.event_memory))
+        else:
+            memory_samples = random.sample(self.event_memory, self.sample_size)
+            
+        for memory in memory_samples:
+            previous_state = memory[0]
+            action = memory[1]
+            reward = memory[2]
+            next_state = memory[3]
+        return False
         
     

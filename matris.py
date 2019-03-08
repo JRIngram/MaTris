@@ -45,6 +45,7 @@ class Matris(object):
     agent_mode = True #used to check if agent is playing. Causes hard-drops to always happen.
     seed = agent.load_new_seed()
     random.seed(seed)
+    tetromino_placement = None
     
     def __init__(self):
         self.surface = screen.subsurface(Rect((MATRIS_OFFSET+BORDERWIDTH, MATRIS_OFFSET+BORDERWIDTH),
@@ -106,9 +107,9 @@ class Matris(object):
         
         if self.agent_mode == True:
             #Agent's first move
-            tetromino_placement = self.agent.make_move()
-            self.tetromino_position = (0,tetromino_placement[2])
-            for rotations in range(tetromino_placement[0]):
+            self.tetromino_placement = self.agent.make_move()
+            self.tetromino_position = (0,self.tetromino_placement[2])
+            for rotations in range(self.tetromino_placement[0]):
                 self.request_rotation()
 
 
@@ -436,26 +437,28 @@ class Matris(object):
             self.agent.set_agent_tetromino(self.current_tetromino)
             self.agent.set_current_board(self.board)
             
-            #TODO NEED TO ADD MEMORY FROM ORIGINAL MOVE
             #Remembers previous S,A,R,S
             self.agent.set_lines_cleared(self.lines)
+            starting_score = self.agent.score
             reward = self.agent.update_score(self.score)
-            tetromino_placement = self.agent.make_move()
-            episode_ended = False
-            if tetromino_placement == False:
+            if starting_score == 0:            #Remembers episode if first move
+                self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, reward, self.agent.get_current_board(), False)
+                self.agent.update_approximater()
+            elif self.agent.check_game_over():  #Ends episode if previous turn was terminal
                 #End of episode
+                punishment = -1000 #Punishment for reaching a terminal state
                 if self.agent.random_moves == False:
-                    self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, reward, self.agent.get_current_board(), True)
+                    self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, punishment, self.agent.get_current_board(), True)
                     self.agent.update_approximater()
                 self.gameover()
-                episode_ended = True
-            if episode_ended == False:
-                #Continue episode
+            else:
+                #Continue episode as not in terminal state
+                self.tetromino_placement = self.agent.make_move()
                 if self.agent.random_moves == False:
                     self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, reward, self.agent.get_current_board(), False)
                     self.agent.update_approximater()
-                self.tetromino_position = (0,tetromino_placement[2])
-                for rotations in range(tetromino_placement[0]):
+                self.tetromino_position = (0,self.tetromino_placement[2])
+                for rotations in range(self.tetromino_placement[0]):
                     self.request_rotation()
 
     def remove_lines(self):
