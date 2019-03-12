@@ -382,30 +382,32 @@ class agent():
             value_prediction = self.target_net.predict(state, batch_size=1)
         return value_prediction
     
-    def find_valid_placements(self, agent_tetromino=None):
+    def find_valid_placements(self, agent_tetromino=None, board_representation=None):
         """
         Searches the board for valid placements
         Searches the top of each column on the board for valid placement.
         """
         if(agent_tetromino==None):
             agent_tetromino = self.agent_tetromino
+        if(board_representation==None):
+            board_representation = self.current_board
             
         valid_placements = []
         #Hard coded as only 4 possible rotations
-        valid_placements.append(self.find_valid_placements_for_rotation(agent_tetromino, 0))
-        valid_placements.append(self.find_valid_placements_for_rotation(agent_tetromino, 1))
-        valid_placements.append(self.find_valid_placements_for_rotation(agent_tetromino, 2))
-        valid_placements.append(self.find_valid_placements_for_rotation(agent_tetromino ,3))
+        valid_placements.append(self.find_valid_placements_for_rotation(agent_tetromino, 0, board_representation))
+        valid_placements.append(self.find_valid_placements_for_rotation(agent_tetromino, 1, board_representation))
+        valid_placements.append(self.find_valid_placements_for_rotation(agent_tetromino, 2, board_representation))
+        valid_placements.append(self.find_valid_placements_for_rotation(agent_tetromino, 3, board_representation))
         return valid_placements
         
         
-    def find_valid_placements_for_rotation(self, agent_tetromino, rotation):
+    def find_valid_placements_for_rotation(self, agent_tetromino, rotation, board):
         """
         Searches the board for valid placements for a rotation of a tetromino
         This is performed 4 times. Once for each tetromino.
         """
-
-        column_heights = self.current_board.column_heights
+        
+        column_heights = board.column_heights
         tetromino, left_trimmed = self.trim_tetromino(agent_tetromino,rotation)
         #Used for debugging
         tetromino_width_stats = self.calculate_tetromino_width(agent_tetromino, rotation)
@@ -419,7 +421,7 @@ class agent():
         #Check column height and for each column
         valid_placements = []
         for column in range(len(column_heights)-(tetromino_width-1)): #For each column
-            test_board = copy.deepcopy(self.current_board) #Create copy of board
+            test_board = copy.deepcopy(board) #Create copy of board
             placeable_height = 21 - column_heights[column] #For the current column, what height can the tetromino be placed at
             for tet_height in range(tetromino_height + 1): #for each row in the tetromino
                 for tet_width in range(tetromino_width): #for each column in tetromino
@@ -472,9 +474,9 @@ class agent():
         full_rows = [None]*potential_height
         for x in range(len(agent_tetromino[rotation])):
             for y in range(len(agent_tetromino[rotation][0])):
-               if agent_tetromino[rotation][y][x] == 1:
-                   full_rows[y] = 1
-             #TODO Add break once full_rows is full?
+                if agent_tetromino[rotation][y][x] == 1:
+                    full_rows[y] = 1
+            #TODO Add break once full_rows is full?
         return full_rows
     
     def get_current_episode(self):
