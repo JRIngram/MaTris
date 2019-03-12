@@ -3,6 +3,8 @@ Module used to create a Tetris playing agent
 Created by JRIngram 
 """
 import copy, time, random, csv
+from tetrominoes import list_of_tetrominoes
+
 import keras
 from keras.models import Sequential
 from keras.layers import Dense
@@ -202,6 +204,14 @@ class agent():
              [0,1,1]]
         """
         self.agent_tetromino = []
+        self.agent_tetromino.append(self.convert_tetromino(tetromino))
+        for x in range (0,3):
+            self.agent_tetromino.append(self.rotate_agent_tetromino(self.agent_tetromino[x]))
+    
+    def convert_tetromino(self, tetromino):
+        """
+        Converts a tetromino from the O,X representation in tetrominos.py to the 0 and 1 representation used by the agent.
+        """
         tetromino_array = []
         for x in range(len(tetromino[2])):
             tetromino_row = []
@@ -211,9 +221,7 @@ class agent():
                 else:
                     tetromino_row.append(0)
             tetromino_array.append(tetromino_row)
-        self.agent_tetromino.append(tetromino_array)
-        for x in range (0,3):
-            self.agent_tetromino.append(self.rotate_agent_tetromino(self.agent_tetromino[x]))
+        return tetromino_array
     
     def get_agent_tetromino(self):
         """
