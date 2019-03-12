@@ -382,30 +382,34 @@ class agent():
             value_prediction = self.target_net.predict(state, batch_size=1)
         return value_prediction
     
-    def find_valid_placements(self):
+    def find_valid_placements(self, agent_tetromino=None):
         """
         Searches the board for valid placements
         Searches the top of each column on the board for valid placement.
         """
+        if(agent_tetromino==None):
+            agent_tetromino = self.agent_tetromino
+            
         valid_placements = []
         #Hard coded as only 4 possible rotations
-        valid_placements.append(self.find_valid_placements_for_rotation(0))
-        valid_placements.append(self.find_valid_placements_for_rotation(1))
-        valid_placements.append(self.find_valid_placements_for_rotation(2))
-        valid_placements.append(self.find_valid_placements_for_rotation(3))
+        valid_placements.append(self.find_valid_placements_for_rotation(agent_tetromino, 0))
+        valid_placements.append(self.find_valid_placements_for_rotation(agent_tetromino, 1))
+        valid_placements.append(self.find_valid_placements_for_rotation(agent_tetromino, 2))
+        valid_placements.append(self.find_valid_placements_for_rotation(agent_tetromino ,3))
         return valid_placements
         
         
-    def find_valid_placements_for_rotation(self, rotation):
+    def find_valid_placements_for_rotation(self, agent_tetromino, rotation):
         """
         Searches the board for valid placements for a rotation of a tetromino
         This is performed 4 times. Once for each tetromino.
         """
 
         column_heights = self.current_board.column_heights
-        tetromino, left_trimmed = self.trim_tetromino(self.agent_tetromino,rotation)
-        tetromino_width_stats = self.calculate_tetromino_width(rotation)
-        tetromino_height_stats = self.calculate_tetromino_height(rotation)
+        tetromino, left_trimmed = self.trim_tetromino(agent_tetromino,rotation)
+        #Used for debugging
+        tetromino_width_stats = self.calculate_tetromino_width(agent_tetromino, rotation)
+        tetromino_height_stats = self.calculate_tetromino_height(agent_tetromino, rotation)
         #Need to trim None values and find empty column get a more realistic shape of the tetromino
         tetromino_width = len(tetromino[0])
         tetromino_height = len(tetromino) - 1 
@@ -445,30 +449,30 @@ class agent():
                     valid_placements.append(placeable_position)
         return valid_placements
         
-    def calculate_tetromino_width(self,rotation):
+    def calculate_tetromino_width(self, agent_tetromino, rotation):
         """
         Calculates the width of the current tetromino.
         Finds out how many cells on the X axis are actually filled.
         """
-        potential_width = len(self.agent_tetromino[rotation][0]) #number of columns
+        potential_width = len(agent_tetromino[rotation][0]) #number of columns
         full_columns = [None]*potential_width
-        for x in range(len(self.agent_tetromino[rotation])): #for each row
-            for y in range(len(self.agent_tetromino[rotation][0])):
-                if self.agent_tetromino[rotation][x][y] == 1:
+        for x in range(len(agent_tetromino[rotation])): #for each row
+            for y in range(len(agent_tetromino[rotation][0])):
+                if agent_tetromino[rotation][x][y] == 1:
                     full_columns[y] = 1
             #TODO Add break once full_columns is full?
         return full_columns
             
-    def calculate_tetromino_height(self, rotation):
+    def calculate_tetromino_height(self, agent_tetromino, rotation):
         """
         Calculates the width of the current tetromino.
         Finds out how many cells on the Y axis are actually filled.
         """
-        potential_height = len(self.agent_tetromino[rotation])
+        potential_height = len(agent_tetromino[rotation])
         full_rows = [None]*potential_height
-        for x in range(len(self.agent_tetromino[rotation])):
-            for y in range(len(self.agent_tetromino[rotation][0])):
-               if self.agent_tetromino[rotation][y][x] == 1:
+        for x in range(len(agent_tetromino[rotation])):
+            for y in range(len(agent_tetromino[rotation][0])):
+               if agent_tetromino[rotation][y][x] == 1:
                    full_rows[y] = 1
              #TODO Add break once full_rows is full?
         return full_rows
