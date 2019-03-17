@@ -446,15 +446,17 @@ class Matris(object):
                     punishment = -1000 #Punishment for reaching a terminal state
                     self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, punishment, self.agent.get_current_board(), True)
                     self.agent.update_approximater()
+                    self.agent.reset_approximaters()
                 self.gameover()
             else:   #Continue episode as not in terminal state
                 self.tetromino_placement = self.agent.make_move()
-                if self.tetromino_placement == False: #TODO needs to handle game over properly - currently state not remembered and new board not remembered!
+                if self.tetromino_placement == False:
                     self.gameover()
                 else:
                     if self.agent.random_moves == False:
                         self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, reward, self.agent.get_current_board(), False)
                         self.agent.update_approximater()
+                        self.agent.reset_approximaters()
                     self.tetromino_position = (0,self.tetromino_placement[2])
                     for rotations in range(self.tetromino_placement[0]):
                         self.request_rotation()

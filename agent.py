@@ -160,6 +160,7 @@ class agent():
     reset_steps = 0 
     random_moves = True
     event_memory = None
+    steps_taken = 0
     
     #Used for state action recording
     previous_state = None
@@ -322,6 +323,7 @@ class agent():
         return placement
         
     def dqn_move(self):
+        self.steps_taken = self.steps_taken + 1
         choose_optimal = self.rand.random()
         tetromino_input = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
         for tetromino_height in range(0, len(self.agent_tetromino[0])):
@@ -358,6 +360,16 @@ class agent():
                         optimal_placement = [possible_actions[rotation][option][0], node_value]
             #rotation,height,column (corrected by trim)
             placement = [optimal_placement[0][0], optimal_placement[0][2], optimal_placement[0][1] - optimal_placement[0][3]]
+            
+            #Checks if top two columns are filled by the chosen placement
+            for option in range(0, len(possible_actions[placement[0]])):
+                if(possible_actions[placement[0]][option][0][1] == placement[2]):
+                    chosen_board = possible_actions[placement[0]][option][1]
+                    if chosen_board.skyline_occuppied() == True:
+                        print("Game Over: Option chosen where skyline occupied")
+                        return False
+                    else:
+                        break
                         
         else:
             placement = self.choose_random_tetromino_placement()
@@ -714,5 +726,13 @@ class agent():
                     target_array.append(original_prediction[0,x])
             net_target = np.array([target_array])
             self.current_net.fit(previous_state_input, net_target,verbose=0)
-        
+            
+    def reset_approximaters(self):
+        """
+        Sets the target_net to the current_net every fixed amount of steps
+        """
+        if self.steps_taken % self.reset_steps == 0:
+            self.target_net = copy.deepcopy(self.current_net)
+    
+    
     
