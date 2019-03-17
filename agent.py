@@ -183,7 +183,7 @@ class agent():
         #Initialize action-value function Q with random weights
         self.current_net = Sequential()
         #26 inputs, one for each possible tetromino cell (4 * 4) and one for each column height difference
-        self.current_net.add(Dense(3, input_dim=26, activation='tanh'))
+        self.current_net.add(Dense(33, input_dim=26, activation='tanh'))
         #40 outputs, one for each possible action: 10 columns * 4 rotations.
         self.current_net.add(Dense(40, activation='linear'))
         self.current_net.compile(loss='mean_squared_error',
@@ -390,22 +390,22 @@ class agent():
             value_prediction = self.target_net.predict(state, batch_size=1)
         return value_prediction
     
-    def find_valid_placements(self, agent_tetromino=None, board_representation=None):
+    def find_valid_placements(self, agent_tetromino=None, board=None):
         """
         Searches the board for valid placements
         Searches the top of each column on the board for valid placement.
         """
         if(agent_tetromino==None):
             agent_tetromino = self.agent_tetromino
-        if(board_representation==None):
-            board_representation = self.current_board
+        if(board==None):
+            board = self.current_board
             
         valid_placements = []
         #Hard coded as only 4 possible rotations
-        valid_placements.append(self.find_valid_placements_for_rotation(agent_tetromino, 0, board_representation))
-        valid_placements.append(self.find_valid_placements_for_rotation(agent_tetromino, 1, board_representation))
-        valid_placements.append(self.find_valid_placements_for_rotation(agent_tetromino, 2, board_representation))
-        valid_placements.append(self.find_valid_placements_for_rotation(agent_tetromino, 3, board_representation))
+        valid_placements.append(self.find_valid_placements_for_rotation(agent_tetromino, 0, board))
+        valid_placements.append(self.find_valid_placements_for_rotation(agent_tetromino, 1, board))
+        valid_placements.append(self.find_valid_placements_for_rotation(agent_tetromino, 2, board))
+        valid_placements.append(self.find_valid_placements_for_rotation(agent_tetromino, 3, board))
         return valid_placements
         
         
@@ -631,6 +631,89 @@ class agent():
             action = memory[1]
             reward = memory[2]
             next_state = memory[3]
-        return False
+            terminal_state = memory[4]
+            
+            if terminal_state == True:
+                #Terminal state, so target is just the received reward
+                target = np.array([reward])
+            else:
+                """
+                From the next_state:
+                For each possible next tetromino
+                    Calculate the next possible actions
+                    Choose the Maximum Possible Reward
+                Pick the Maximum from the maximums, set to SAMAX
+                Perform: target = Reward + (GAMMA * SAMAX)
+                """
+                column_differences = next_state.column_differences
+                maximum_values = []
+                tetrominos = list_of_tetrominoes
+                for tetromino_shape in tetrominos:
+                    tetromino = self.convert_tetromino(tetromino_shape)
+                    #Loads a standard 4*4 tetromino input
+                    tetromino_input = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
+                    for tetromino_height in range(0, len(tetromino)):
+                        for tetromino_width in range (0, len(tetromino[0])):
+                            tetromino_input[tetromino_height][tetromino_width] = tetromino[tetromino_height][tetromino_width]
+                    
+                    #Loads the "next state" with the chosen tetromino into an numpy array
+                    next_state_inputs = np.array([[#Tetromino being used
+                                      tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
+                                      tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
+                                      tetromino_input[2][0],tetromino_input[2][1],tetromino_input[2][2],tetromino_input[2][3],
+                                      tetromino_input[3][0],tetromino_input[3][1],tetromino_input[3][2],tetromino_input[3][3],
+                                      #Current state of the board (differences in column height)
+                                      column_differences[0],column_differences[1],
+                                      column_differences[2],column_differences[3],
+                                      column_differences[4],column_differences[5],
+                                      column_differences[6],column_differences[7],
+                                      column_differences[8],column_differences[9],                      
+                            ]])
+                    
+                    #Stores the 4 possible rotations for the tetromino
+                    tetromino_rotations = []
+                    tetromino_rotations.append(tetromino)
+                    for x in range (0,3):
+                        tetromino_rotations.append(self.rotate_agent_tetromino(tetromino_rotations[x]))
+                    #queries ANN
+                    query_output = self.query(next_state_inputs, False)
+                   
+                    #retrieves values of valid placements and takes the maximum
+                    valid_placements = self.find_valid_placements(tetromino_rotations, next_state)
+                    tetromino_values = []
+                    for valid_rotation in valid_placements:
+                        for placement in valid_rotation:
+                            rotation = placement[0][0]
+                            column = placement[0][1]
+                            output_node = (rotation*10) + column #output node to retrieve the predicted value from.
+                            node_value = query_output[0][output_node]
+                            tetromino_values.append([node_value, output_node])
+                    maximum_value = None
+                    for value in tetromino_values:
+                        if maximum_value == None:
+                            maximum_value = value
+                        elif maximum_value[0] < value[0]:
+                            maximum_value = value
+                    maximum_values.append(maximum_value)
+                
+                maximum_value = None
+                for value in maximum_values:
+                    if maximum_value == None:
+                        maximum_value = value
+                    elif maximum_value[0] < value[0]:
+                        maximum_value = value
+                target = reward + (self.discount * maximum_value[0])
+                
+            previous_state_input = np.array([previous_state])
+            original_prediction = self.target_net.predict(np.array(previous_state_input))
+            target_array = []
+            action_node = (action[0]*10) + action[2] #output node to retrieve the predicted value from.
+            for x in range (0,40):
+                if action_node == x:
+                    target_array.append(target)
+                else:
+                    target_array.append(original_prediction[0,x])
+            net_target = np.array([target_array])
+            self.current_net.fit(previous_state_input, net_target,verbose=0)
         
     

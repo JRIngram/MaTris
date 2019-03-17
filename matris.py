@@ -41,7 +41,7 @@ VISIBLE_MATRIX_HEIGHT = MATRIX_HEIGHT - 2
 class Matris(object):
     
     board = agent.board()
-    agent = agent.agent([],100, random_moves = False)
+    agent = agent.agent([],100, random_moves = False, epsilon=0.1)
     agent_mode = True #used to check if agent is playing. Causes hard-drops to always happen.
     seed = agent.load_new_seed()
     random.seed(seed)
