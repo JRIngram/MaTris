@@ -108,10 +108,10 @@ class board():
         Checks if the top two rows of the board representation is occupied, which signals that the skyline is occupied.
         Returns true if occupied;false if unoccupied. 
         """
-        for x in range (len(self.boardRepresentation[0])): #[0] and [1] will always be the same length
-            if self.boardRepresentation[0][x] or self.boardRepresentation[1][x] == 1:
-                return True
-        return False
+        if 1 in self.boardRepresentation[0] or 1 in self.boardRepresentation[1]:
+            return True
+        else:
+            return False
     
     def set_column_differences(self):
         """
@@ -304,17 +304,17 @@ class agent():
         placement = [rotation,possible_placements[rotation][placement_option][0][2],possible_placements[rotation][placement_option][0][1]]
         
         #Checks if top two columns are filled by the chosen placement
-        self.chosen_board_representation = []
         for option in range(len(possible_placements[placement[0]])):
             if possible_placements[placement[0]][option][0][1] == placement[2]:
-                self.chosen_board_representation = possible_placements[placement[0]][option][1].boardRepresentation
-                break
+                chosen_board = possible_placements[placement[0]][option][1]
+                if chosen_board.skyline_occuppied():
+                    print("Game Over: Option chosen where skyline occupied")
+                    elapsed = time.time() - t
+                    print("Time Taken:" + str(elapsed))
+                    return False
+                else:
+                    break
                 
-        if 1 in self.chosen_board_representation[0] or 1 in self.chosen_board_representation[0]:
-            print("Game Over: Option chosen where skyline occupied")
-            elapsed = time.time() - t
-            print("Time Taken:" + str(elapsed))
-            return False
         elapsed = time.time() - t
         #Check if top two rows filled
         print("Time Taken:" + str(elapsed))
@@ -350,7 +350,6 @@ class agent():
             for rotation in range(0,len(possible_actions)): 
                 for option in range(0,len(possible_actions[rotation])):
                     #For each option for each rotation check the value
-                    #ISSUE ACCESSING DUE TO CHANGE IN ANN TOPOLOGY
                     output_node = (rotation*10) + option #output node to retrieve the predicted value from.
                     node_value = predicted_values[0][output_node]
                     if optimal_placement == None:
