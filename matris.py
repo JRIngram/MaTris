@@ -41,7 +41,7 @@ VISIBLE_MATRIX_HEIGHT = MATRIX_HEIGHT - 2
 class Matris(object):
     
     board = agent.board()
-    agent = agent.agent([],5, random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.1, epsilon_minimum=0.01)
+    agent = agent.agent([],5000, random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.1, epsilon_minimum=0.01)
     agent_mode = True #used to check if agent is playing. Causes hard-drops to always happen.
     seed = agent.load_new_seed()
     random.seed(seed)
@@ -646,6 +646,7 @@ class Menu(object):
     running = True
     def main(self, screen):
         clock = pygame.time.Clock()
+        
         menu = kezmenu.KezMenu(
             ['Play!', lambda: Game().main(screen)],
             ['Quit', lambda: setattr(self, 'running', False)],
@@ -659,7 +660,8 @@ class Menu(object):
         highscoresurf = self.construct_highscoresurf() #Loads highscore onto menu
 
         timepassed = clock.tick(30) / 1000.
-
+        
+        Game().main(screen)
         while self.running:
             events = pygame.event.get()
 
@@ -678,6 +680,7 @@ class Menu(object):
             screen.blit(highscoresurf, highscoresurf.get_rect(right=WIDTH-50, bottom=HEIGHT-50))
             menu.draw(screen)
             pygame.display.flip()
+        
 
     def construct_highscoresurf(self):
         """
