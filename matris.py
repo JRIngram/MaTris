@@ -41,7 +41,7 @@ VISIBLE_MATRIX_HEIGHT = MATRIX_HEIGHT - 2
 class Matris(object):
     
     board = agent.board()
-    agent = agent.agent([],5000, random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.1, epsilon_minimum=0.01)
+    agent = agent.agent([],50000, random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.1, epsilon_minimum=0.01)
     agent_mode = True #used to check if agent is playing. Causes hard-drops to always happen.
     seed = agent.load_new_seed()
     random.seed(seed)
@@ -72,10 +72,7 @@ class Matris(object):
             self.board.set_holes()
             self.board.set_column_differences()
             print(str(self.board))
-            print("Board Height: " + str(self.board.get_board_height()))
-            print("Cumulative Height: " + str(self.board.get_cum_height()))
             print("Column Height Differences:" + str(self.board.column_differences))
-            print("Holes: " + str(self.board.get_holes()))
             
             #Set up the the agent
             self.agent.set_current_board(self.board)
@@ -425,10 +422,15 @@ class Matris(object):
             self.board.set_holes()
             self.board.set_column_differences()
             print(str(self.board))
-            print("Board Height: " + str(self.board.get_board_height()))
-            print("Cumulative Height: " + str(self.board.get_cum_height()))
             print("Column Height Differences:" + str(self.board.column_differences))
-            print("Holes: " + str(self.board.get_holes()))
+            print(str(self.tetromino_placement))
+            print("\nTetromino:")
+            for line in range(0,len(self.agent.agent_tetromino[0])):
+                print(str(self.agent.agent_tetromino[0][line]))
+            print("Epsilon: " + str(self.agent.epsilon))
+            print("Score: " + str(self.agent.score))
+            print("Lines Cleared: " + str(self.agent.lines_cleared))
+            print("**********************************")
                      
             
             #Passes tetromino and board information to the agent.

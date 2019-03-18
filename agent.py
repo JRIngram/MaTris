@@ -132,6 +132,11 @@ class board():
                 column_differences[x] = 0
             else:
                 column_differences[x] = column_heights[x-1] - column_heights[x]
+        for x in range(0, len(column_differences)):
+            if column_differences[x] > 4:
+                column_differences[x] = 4
+            elif column_differences[x] < -4:
+                column_differences[x] = -4
         self.column_differences = column_differences
     
 class agent():
@@ -146,6 +151,7 @@ class agent():
     lines_cleared = 0
     score = 0
     rewards_as_lines = False
+    results_file_path = ""
     
     #Determines how moves are made
     random_moves = True
@@ -188,6 +194,7 @@ class agent():
         self.current_net = Sequential()
         #26 inputs, one for each possible tetromino cell (4 * 4) and one for each column height difference
         self.current_net.add(Dense(33, input_dim=26, activation='tanh'))
+        self.current_net.add(Dense(33, activation='tanh'))
         #40 outputs, one for each possible action: 10 columns * 4 rotations.
         self.current_net.add(Dense(40, activation='linear'))
         self.current_net.compile(loss='mean_squared_error',
@@ -196,6 +203,12 @@ class agent():
         
         #Initialize target action-value function Q
         self.target_net = copy.deepcopy(self.current_net)
+        
+        #Create a csv file to store results
+        self.file_path = "results/results-" + str(time.strftime("%H:%M:%S_%d-%m-%y")) + ".csv"
+        with open(self.file_path, 'w+') as results_file:
+            results_file.write("episode,results" + "\n")
+            
     
     def set_agent_tetromino(self, tetromino):
         """
@@ -295,13 +308,11 @@ class agent():
         for x in range(4):
             if len(possible_placements[x]) > 0:
                 rotations_with_remaining_placements.append(x)
-                print("Valid placements: " + str(x) + ":" + str(len(possible_placements[x])))
+                #print("Valid placements: " + str(x) + ":" + str(len(possible_placements[x])))
         rotation = rotations_with_remaining_placements[random.randint(0, len(rotations_with_remaining_placements) - 1)]         
         number_of_placements = len(possible_placements[rotation])-1
         if number_of_placements < 0:
             print("Game Over: Rotation with no remaining placements chosen.")
-            elapsed = time.time() - t
-            print("Time Taken:" + str(elapsed))
             return False
         placement_option = random.randint(0,number_of_placements)
         #rotation,height,column
@@ -313,15 +324,11 @@ class agent():
                 chosen_board = possible_placements[placement[0]][option][1]
                 if chosen_board.skyline_occuppied():
                     print("Game Over: Option chosen where skyline occupied")
-                    elapsed = time.time() - t
-                    print("Time Taken:" + str(elapsed))
                     return False
                 else:
                     break
                 
-        elapsed = time.time() - t
         #Check if top two rows filled
-        print("Time Taken:" + str(elapsed))
         placement[2] = placement[2] - possible_placements[rotation][placement_option][0][3] #Corrects column placement after trimming
         return placement
         
@@ -534,7 +541,7 @@ class agent():
         number of lines cleared to the file results.csv
         """
         episode_results = [str(self.current_episode),str(self.lines_cleared)]
-        with open('results.csv', 'a') as results:
+        with open(self.file_path, 'a') as results:
             writer = csv.writer(results)
             writer.writerow(episode_results)
             results.close()
