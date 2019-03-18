@@ -41,7 +41,7 @@ VISIBLE_MATRIX_HEIGHT = MATRIX_HEIGHT - 2
 class Matris(object):
     
     board = agent.board()
-    agent = agent.agent([],100, random_moves = False, rewards_as_lines=True, epsilon=0.1)
+    agent = agent.agent([],5, random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.1, epsilon_minimum=0.01)
     agent_mode = True #used to check if agent is playing. Causes hard-drops to always happen.
     seed = agent.load_new_seed()
     random.seed(seed)
@@ -250,8 +250,6 @@ class Matris(object):
                     self.score = 0
                     self.lines = 0
                     self.board.update_board_representation(self.create_board_representation())
-                    if self.agent.current_episode == 99:
-                        x=1
                     new_seed = self.agent.load_new_seed()
                     if new_seed == None:
                         try:

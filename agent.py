@@ -167,7 +167,7 @@ class agent():
     previous_state = None
     previous_action = None
     
-    def __init__(self, tetromino=[], episodes=1, random_moves=True, rewards_as_lines=False, epsilon=0.1, discount=0.99,  epsilon_decay=0, memory_size=1000, sample_size=50, reset_steps=1000):
+    def __init__(self, tetromino=[], episodes=1, random_moves=True, rewards_as_lines=False, epsilon=0.1, discount=0.99,  epsilon_decay=0, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000):
         self.agent_tetromino = tetromino
         self.number_of_episodes = episodes
         self.rand = random.Random(self.load_new_seed())
@@ -176,6 +176,7 @@ class agent():
         
         self.epsilon = epsilon
         self.epsilon_decay = epsilon_decay
+        self.epsilon_minimum = epsilon_minimum
         self.discount = discount
         self.event_memory = []
         self.memory_size = memory_size
@@ -514,11 +515,18 @@ class agent():
     
     def complete_episode(self):
         """
-        Writes the results of the current episode and increases the current episode by 1
+        Writes the results of the current episode, increases the current episode by 1 and decays epsilon
         """
         self.write_results_to_csv()
         self.current_episode = self.current_episode + 1
         self.score = 0
+        self.decay_epsilon()
+        
+    def decay_epsilon(self):
+        if self.epsilon > self.epsilon_minimum:
+            self.epsilon = self.epsilon * (1 - self.epsilon_decay)
+            if self.epsilon < self.epsilon_minimum:
+                self.epsilon = self.epsilon_minimum
     
     def write_results_to_csv(self):
         """
