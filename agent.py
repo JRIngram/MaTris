@@ -145,6 +145,7 @@ class agent():
     current_episode=0
     lines_cleared = 0
     score = 0
+    rewards_as_lines = False
     
     #Determines how moves are made
     random_moves = True
@@ -166,11 +167,12 @@ class agent():
     previous_state = None
     previous_action = None
     
-    def __init__(self, tetromino=[], episodes=1, random_moves=True, epsilon=0.1, discount=0.99,  epsilon_decay=0, memory_size=1000, sample_size=50, reset_steps=1000):
+    def __init__(self, tetromino=[], episodes=1, random_moves=True, rewards_as_lines=False, epsilon=0.1, discount=0.99,  epsilon_decay=0, memory_size=1000, sample_size=50, reset_steps=1000):
         self.agent_tetromino = tetromino
         self.number_of_episodes = episodes
         self.rand = random.Random(self.load_new_seed())
         self.random_moves = random_moves
+        self.rewards_as_lines = rewards_as_lines
         
         self.epsilon = epsilon
         self.epsilon_decay = epsilon_decay
@@ -517,13 +519,6 @@ class agent():
         self.write_results_to_csv()
         self.current_episode = self.current_episode + 1
         self.score = 0
-        
-    def set_lines_cleared(self, lines_cleared):
-        """
-        Changes the value of lines_cleared, 
-        the total number of lines the agent has cleared this episode
-        """
-        self.lines_cleared = lines_cleared
     
     def write_results_to_csv(self):
         """
@@ -618,6 +613,31 @@ class agent():
         reward = score - self.score
         self.score = score
         return reward
+    
+    def set_lines_cleared(self, lines_cleared):
+        """
+        Changes the value of lines_cleared, 
+        the total number of lines the agent has cleared this episode
+        """
+        reward = lines_cleared - self.lines_cleared
+        self.lines_cleared = lines_cleared
+        return reward
+    
+    def update_score_and_lines(self, score, lines_cleared):
+        """
+        Updates the agent score and number of lines cleared.
+        If self.rewards_as_lines is True then the reward is returned as the number of lines cleared that turn.
+        If self.rewards_as_lines is False then the reward is returned as the score increase in that turn.
+        """
+        if self.rewards_as_lines == True:
+            self.update_score(score)
+            reward = self.set_lines_cleared(lines_cleared)
+            return reward
+        else:
+            reward = self.update_score(score)
+            self.set_lines_cleared(lines_cleared)
+            return reward
+        
     
     def remember_state_action(self,previous_state, previous_action, reward, new_board, terminal_state):
         self.event_memory.append([previous_state, previous_action, reward, copy.deepcopy(new_board), terminal_state])
