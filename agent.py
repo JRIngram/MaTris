@@ -205,7 +205,7 @@ class agent():
         self.target_net = copy.deepcopy(self.current_net)
         
         #Create a csv file to store results
-        self.file_path = "results/results-" + str(time.strftime("%H:%M:%S_%d-%m-%y")) + ".csv"
+        self.file_path = "results/results-" + str(time.strftime("%d-%m-%y_%H:%M:%S")) + ".csv"
         with open(self.file_path, 'w+') as results_file:
             results_file.write("episode,results" + "\n")
             
@@ -311,9 +311,10 @@ class agent():
                 #print("Valid placements: " + str(x) + ":" + str(len(possible_placements[x])))
         rotation = rotations_with_remaining_placements[random.randint(0, len(rotations_with_remaining_placements) - 1)]         
         number_of_placements = len(possible_placements[rotation])-1
-        if number_of_placements < 0:
-            print("Game Over: Rotation with no remaining placements chosen.")
-            return False
+        while number_of_placements < 0:
+            rotation = rotations_with_remaining_placements[random.randint(0, len(rotations_with_remaining_placements) - 1)]         
+            number_of_placements = len(possible_placements[rotation])-1
+            #return False
         placement_option = random.randint(0,number_of_placements)
         #rotation,height,column
         placement = [rotation,possible_placements[rotation][placement_option][0][2],possible_placements[rotation][placement_option][0][1]]
@@ -324,6 +325,7 @@ class agent():
                 chosen_board = possible_placements[placement[0]][option][1]
                 if chosen_board.skyline_occuppied():
                     print("Game Over: Option chosen where skyline occupied")
+                    self.previous_action = copy.deepcopy(placement)
                     return False
                 else:
                     break
@@ -335,11 +337,7 @@ class agent():
     def dqn_move(self):
         self.steps_taken = self.steps_taken + 1
         choose_optimal = self.rand.random()
-        tetromino_input = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
-        for tetromino_height in range(0, len(self.agent_tetromino[0])):
-            #Fills the tetromino_input; used as part of the ANN input
-            for tetromino_width in range (0, len(self.agent_tetromino[0][tetromino_height])):
-                tetromino_input[tetromino_height][tetromino_width] = self.agent_tetromino[0][tetromino_height][tetromino_width]
+        tetromino_input = self.tetromino_to_input()
         if choose_optimal > self.epsilon:
             possible_actions = self.find_valid_placements()     
             state = np.array([[#Tetromino being used
@@ -377,6 +375,20 @@ class agent():
                     chosen_board = possible_actions[placement[0]][option][1]
                     if chosen_board.skyline_occuppied() == True:
                         print("Game Over: Option chosen where skyline occupied")
+                        #Remember previous state and action
+                        previous_column_diffs = copy.deepcopy(self.current_board.column_differences)
+                        self.previous_state = [#Tetromino being used
+                                tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
+                                tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
+                                tetromino_input[2][0],tetromino_input[2][1],tetromino_input[2][2],tetromino_input[2][3],
+                                tetromino_input[3][0],tetromino_input[3][1],tetromino_input[3][2],tetromino_input[3][3],
+                                #Current state of the board (differences in column height) being stored to record S,A,R,S
+                                previous_column_diffs[0],previous_column_diffs[1],
+                                previous_column_diffs[2],previous_column_diffs[3],
+                                previous_column_diffs[4],previous_column_diffs[5],
+                                previous_column_diffs[6],previous_column_diffs[7],
+                                previous_column_diffs[8],previous_column_diffs[9]]
+                        self.previous_action = copy.deepcopy(placement)
                         return False
                     else:
                         break
@@ -384,6 +396,7 @@ class agent():
         else:
             placement = self.choose_random_tetromino_placement()
         
+        #Remember previous state and action
         previous_column_diffs = copy.deepcopy(self.current_board.column_differences)
         self.previous_state = [#Tetromino being used
                                 tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
@@ -396,7 +409,8 @@ class agent():
                                 previous_column_diffs[4],previous_column_diffs[5],
                                 previous_column_diffs[6],previous_column_diffs[7],
                                 previous_column_diffs[8],previous_column_diffs[9]]
-        self.previous_action = copy.deepcopy(placement)
+        if placement != False:
+            self.previous_action = copy.deepcopy(placement)
         return placement
     
     def query(self, state, current_net=True):
@@ -769,5 +783,13 @@ class agent():
         if self.steps_taken % self.reset_steps == 0:
             self.target_net = copy.deepcopy(self.current_net)
     
-    
-    
+    def tetromino_to_input(self):
+        """
+        Converts the agent's tetromino to an input acceptable for the ANN
+        """
+        tetromino_input = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
+        for tetromino_height in range(0, len(self.agent_tetromino[0])):
+        #Fills the tetromino_input; used as part of the ANN input
+            for tetromino_width in range (0, len(self.agent_tetromino[0][tetromino_height])):
+                tetromino_input[tetromino_height][tetromino_width] = self.agent_tetromino[0][tetromino_height][tetromino_width]
+        return tetromino_input
