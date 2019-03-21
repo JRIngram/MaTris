@@ -193,8 +193,8 @@ class agent():
         #Initialize action-value function Q with random weights
         self.current_net = Sequential()
         #26 inputs, one for each possible tetromino cell (4 * 4) and one for each column height difference
-        self.current_net.add(Dense(33, input_dim=26, activation='tanh'))
-        self.current_net.add(Dense(33, activation='tanh'))
+        self.current_net.add(Dense(30, input_dim=18, activation='tanh'))
+        self.current_net.add(Dense(30, activation='tanh'))
         #40 outputs, one for each possible action: 10 columns * 4 rotations.
         self.current_net.add(Dense(40, activation='linear'))
         self.current_net.compile(loss='mean_squared_error',
@@ -337,14 +337,12 @@ class agent():
     def dqn_move(self):
         self.steps_taken = self.steps_taken + 1
         choose_optimal = self.rand.random()
-        tetromino_input = self.tetromino_to_input()
+        tetromino_input = self.tetromino_to_input(self.agent_tetromino[0])
         if choose_optimal > self.epsilon:
             possible_actions = self.find_valid_placements()     
             state = np.array([[#Tetromino being used
                                       tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
                                       tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
-                                      tetromino_input[2][0],tetromino_input[2][1],tetromino_input[2][2],tetromino_input[2][3],
-                                      tetromino_input[3][0],tetromino_input[3][1],tetromino_input[3][2],tetromino_input[3][3],
                                       #Current state of the board (differences in column height
                                       self.current_board.column_differences[0],self.current_board.column_differences[1],
                                       self.current_board.column_differences[2],self.current_board.column_differences[3],
@@ -380,8 +378,6 @@ class agent():
                         self.previous_state = [#Tetromino being used
                                 tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
                                 tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
-                                tetromino_input[2][0],tetromino_input[2][1],tetromino_input[2][2],tetromino_input[2][3],
-                                tetromino_input[3][0],tetromino_input[3][1],tetromino_input[3][2],tetromino_input[3][3],
                                 #Current state of the board (differences in column height) being stored to record S,A,R,S
                                 previous_column_diffs[0],previous_column_diffs[1],
                                 previous_column_diffs[2],previous_column_diffs[3],
@@ -401,8 +397,6 @@ class agent():
         self.previous_state = [#Tetromino being used
                                 tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
                                 tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
-                                tetromino_input[2][0],tetromino_input[2][1],tetromino_input[2][2],tetromino_input[2][3],
-                                tetromino_input[3][0],tetromino_input[3][1],tetromino_input[3][2],tetromino_input[3][3],
                                 #Current state of the board (differences in column height) being stored to record S,A,R,S
                                 previous_column_diffs[0],previous_column_diffs[1],
                                 previous_column_diffs[2],previous_column_diffs[3],
@@ -710,18 +704,13 @@ class agent():
                 tetrominos = list_of_tetrominoes
                 for tetromino_shape in tetrominos:
                     tetromino = self.convert_tetromino(tetromino_shape)
-                    #Loads a standard 4*4 tetromino input
-                    tetromino_input = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
-                    for tetromino_height in range(0, len(tetromino)):
-                        for tetromino_width in range (0, len(tetromino[0])):
-                            tetromino_input[tetromino_height][tetromino_width] = tetromino[tetromino_height][tetromino_width]
-                    
+                    #Loads a standard 4*2 tetromino input
+                    tetromino_input = self.tetromino_to_input(tetromino)
+            
                     #Loads the "next state" with the chosen tetromino into an numpy array
                     next_state_inputs = np.array([[#Tetromino being used
                                       tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
                                       tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
-                                      tetromino_input[2][0],tetromino_input[2][1],tetromino_input[2][2],tetromino_input[2][3],
-                                      tetromino_input[3][0],tetromino_input[3][1],tetromino_input[3][2],tetromino_input[3][3],
                                       #Current state of the board (differences in column height)
                                       column_differences[0],column_differences[1],
                                       column_differences[2],column_differences[3],
@@ -797,13 +786,13 @@ class agent():
         if self.steps_taken % self.reset_steps == 0:
             self.target_net = copy.deepcopy(self.current_net)
     
-    def tetromino_to_input(self):
+    def tetromino_to_input(self, tetromino):
         """
         Converts the agent's tetromino to an input acceptable for the ANN
         """
-        tetromino_input = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
-        for tetromino_height in range(0, len(self.agent_tetromino[0])):
+        tetromino_input = [[0,0,0,0], [0,0,0,0]]
+        for input_height in range(0, len(tetromino_input)):
         #Fills the tetromino_input; used as part of the ANN input
-            for tetromino_width in range (0, len(self.agent_tetromino[0][tetromino_height])):
-                tetromino_input[tetromino_height][tetromino_width] = self.agent_tetromino[0][tetromino_height][tetromino_width]
+            for tetromino_width in range (0, len(tetromino[0])):
+                tetromino_input[input_height][tetromino_width] = tetromino[input_height][tetromino_width]
         return tetromino_input
