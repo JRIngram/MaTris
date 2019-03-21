@@ -139,72 +139,78 @@ class Matris(object):
         """
         Main game loop
         """
-        self.needs_redraw = False
-        
-        pressed = lambda key: event.type == pygame.KEYDOWN and event.key == key
-        unpressed = lambda key: event.type == pygame.KEYUP and event.key == key
-
-        events = pygame.event.get()
-        #Controls pausing and quitting the game.
-        for event in events:
-            if pressed(pygame.K_p):
-                self.surface.fill((0,0,0))
-                self.needs_redraw = True
-                self.paused = not self.paused
-            elif event.type == pygame.QUIT:
-                self.gameover(full_exit=True)
-            elif pressed(pygame.K_ESCAPE):
-                self.gameover()
-
-        if self.paused:
-            return self.needs_redraw
-        
-        if self.agent_mode == True:
-            self.hard_drop()
-        
-        for event in events:
-            #Controls movement of the tetromino
-            if pressed(pygame.K_SPACE):
+        try:
+            self.needs_redraw = False
+            
+            pressed = lambda key: event.type == pygame.KEYDOWN and event.key == key
+            unpressed = lambda key: event.type == pygame.KEYUP and event.key == key
+    
+            events = pygame.event.get()
+            #Controls pausing and quitting the game.
+            for event in events:
+                if pressed(pygame.K_p):
+                    self.surface.fill((0,0,0))
+                    self.needs_redraw = True
+                    self.paused = not self.paused
+                elif event.type == pygame.QUIT:
+                    self.gameover(full_exit=True)
+                elif pressed(pygame.K_ESCAPE):
+                    self.gameover()
+    
+            if self.paused:
+                return self.needs_redraw
+            
+            if self.agent_mode == True:
                 self.hard_drop()
-            elif pressed(pygame.K_UP) or pressed(pygame.K_w):
-                self.request_rotation()
-            elif pressed(pygame.K_LEFT) or pressed(pygame.K_a):
-                self.request_movement('left')
-                self.movement_keys['left'] = 1
-            elif pressed(pygame.K_RIGHT) or pressed(pygame.K_d):
-                self.request_movement('right')
-                self.movement_keys['right'] = 1
-
-            elif unpressed(pygame.K_LEFT) or unpressed(pygame.K_a):
-                self.movement_keys['left'] = 0
-                self.movement_keys_timer = (-self.movement_keys_speed)*2
-            elif unpressed(pygame.K_RIGHT) or unpressed(pygame.K_d):
-                self.movement_keys['right'] = 0
-                self.movement_keys_timer = (-self.movement_keys_speed)*2
-
-
-
-
-        self.downwards_speed = self.base_downwards_speed ** (1 + self.level/10.)
-
-        self.downwards_timer += timepassed
-        downwards_speed = self.downwards_speed*0.10 if any([pygame.key.get_pressed()[pygame.K_DOWN],
-                                                            pygame.key.get_pressed()[pygame.K_s]]) else self.downwards_speed
-        if self.downwards_timer > downwards_speed:
-            if not self.request_movement('down'): #Places tetromino if it cannot move further down
-                self.lock_tetromino()
-
-            self.downwards_timer %= downwards_speed
-
-
-        if any(self.movement_keys.values()):
-            self.movement_keys_timer += timepassed
-        if self.movement_keys_timer > self.movement_keys_speed:
-            self.request_movement('right' if self.movement_keys['right'] else 'left')
-            self.movement_keys_timer %= self.movement_keys_speed
-        
+            
+            for event in events:
+                #Controls movement of the tetromino
+                if pressed(pygame.K_SPACE):
+                    self.hard_drop()
+                elif pressed(pygame.K_UP) or pressed(pygame.K_w):
+                    self.request_rotation()
+                elif pressed(pygame.K_LEFT) or pressed(pygame.K_a):
+                    self.request_movement('left')
+                    self.movement_keys['left'] = 1
+                elif pressed(pygame.K_RIGHT) or pressed(pygame.K_d):
+                    self.request_movement('right')
+                    self.movement_keys['right'] = 1
+    
+                elif unpressed(pygame.K_LEFT) or unpressed(pygame.K_a):
+                    self.movement_keys['left'] = 0
+                    self.movement_keys_timer = (-self.movement_keys_speed)*2
+                elif unpressed(pygame.K_RIGHT) or unpressed(pygame.K_d):
+                    self.movement_keys['right'] = 0
+                    self.movement_keys_timer = (-self.movement_keys_speed)*2
+    
+    
+    
+    
+            self.downwards_speed = self.base_downwards_speed ** (1 + self.level/10.)
+    
+            self.downwards_timer += timepassed
+            downwards_speed = self.downwards_speed*0.10 if any([pygame.key.get_pressed()[pygame.K_DOWN],
+                                                                pygame.key.get_pressed()[pygame.K_s]]) else self.downwards_speed
+            if self.downwards_timer > downwards_speed:
+                if not self.request_movement('down'): #Places tetromino if it cannot move further down
+                    self.lock_tetromino()
+    
+                self.downwards_timer %= downwards_speed
+    
+    
+            if any(self.movement_keys.values()):
+                self.movement_keys_timer += timepassed
+            if self.movement_keys_timer > self.movement_keys_speed:
+                self.request_movement('right' if self.movement_keys['right'] else 'left')
+                self.movement_keys_timer %= self.movement_keys_speed
+            
+        except:
+            print("Error in agent running")
+            print("Manually causing gameover. Preserves continuation of agent running with minor potential impediment on learning.")
+            self.gameover()
+            self.needs_redraw = True
         return self.needs_redraw
-
+        
     def draw_surface(self):
         """
         Draws the image of the current tetromino
@@ -247,7 +253,7 @@ class Matris(object):
                             self.matrix[(y,x)] = None
                     self.score = 0
                     self.lines = 0
-                    self.board.update_board_representation(self.create_board_representation())
+                    self.board = agent.board(self.create_board_representation())
                     new_seed = self.agent.load_new_seed()
                     if new_seed == None:
                         try:
@@ -485,7 +491,7 @@ class Matris(object):
                     self.tetromino_position = (0,self.tetromino_placement[2])
                     for rotations in range(self.tetromino_placement[0]):
                         self.request_rotation()
-
+    
     def remove_lines(self):
         """
         Removes lines from the board
@@ -520,7 +526,7 @@ class Matris(object):
         """
         Does `shape` at `position` fit in `matrix`? If so, return a new copy of `matrix` where all
         the squares of `shape` have been placed in `matrix`. Otherwise, return False.
-        
+            
         This method is often used simply as a test, for example to see if an action by the player is valid.
         It is also used in `self.draw_surface` to paint the falling tetromino and its shadow on the screen.
         """
@@ -528,7 +534,7 @@ class Matris(object):
             shape = self.rotated()
         if position is None:
             position = self.tetromino_position
-
+    
         copy = dict(self.matrix if matrix is None else matrix)
         posY, posX = position
         for x in range(posX, posX+len(shape)):
@@ -595,7 +601,16 @@ class Game(object):
             try:
                 timepassed = clock.tick(50)
                 if self.matris.update((timepassed / 1000.) if not self.matris.paused else 0):
-                    self.redraw()
+                    try:
+                        self.redraw()
+                    except:
+                        print(str(self.matris.board))
+                        print("Column Height Differences:" + str(self.matris.board.column_differences))
+                        print(str(self.matris.tetromino_placement))
+                        print("\nTetromino:")
+                        for line in range(0,len(self.matris.agent.agent_tetromino[0])):
+                            print(str(self.matris.agent.agent_tetromino[0][line]))
+                        self.matris.gameover()
             except GameOver:
                 return
       
