@@ -750,18 +750,32 @@ class agent():
                             tetromino_values.append([node_value, output_node])
                     maximum_value = None
                     for value in tetromino_values:
-                        if maximum_value == None:
-                            maximum_value = value
-                        elif maximum_value[0] < value[0]:
-                            maximum_value = value
+                        if value is not None:
+                            if maximum_value == None:
+                                maximum_value = value
+                            elif maximum_value[0] < value[0]:
+                                maximum_value = value
                     maximum_values.append(maximum_value)
                 
                 maximum_value = None
                 for value in maximum_values:
-                    if maximum_value == None:
-                        maximum_value = value
-                    elif maximum_value[0] < value[0]:
-                        maximum_value = value
+                    try:
+                        #Fixes issue where maximum_values may contain None.
+                        #Resolved by ignoring None value
+                        if value is not None:
+                            if maximum_value == None:
+                                maximum_value = value
+                            elif maximum_value[0] < value[0]:
+                                maximum_value = value
+                        else:
+                            foo="bar"
+                    except:
+                        print("None value in approximator. Value ignored!")
+                
+                if maximum_value == None:
+                    #Handles rare, but not impossible state of no valid moves.
+                    print("Maximum value set to None. Resetting to [0,0]")
+                    maximum_value = [0,0]
                 target = reward + (self.discount * maximum_value[0])
                 
             previous_state_input = np.array([previous_state])
