@@ -139,49 +139,48 @@ class Matris(object):
         """
         Main game loop
         """
-        try:
-            self.needs_redraw = False
+        self.needs_redraw = False
             
-            pressed = lambda key: event.type == pygame.KEYDOWN and event.key == key
-            unpressed = lambda key: event.type == pygame.KEYUP and event.key == key
+        pressed = lambda key: event.type == pygame.KEYDOWN and event.key == key
+        unpressed = lambda key: event.type == pygame.KEYUP and event.key == key
     
-            events = pygame.event.get()
-            #Controls pausing and quitting the game.
-            for event in events:
-                if pressed(pygame.K_p):
-                    self.surface.fill((0,0,0))
-                    self.needs_redraw = True
-                    self.paused = not self.paused
-                elif event.type == pygame.QUIT:
-                    self.gameover(full_exit=True)
-                elif pressed(pygame.K_ESCAPE):
-                    self.gameover()
+        events = pygame.event.get()
+        #Controls pausing and quitting the game.
+        for event in events:
+            if pressed(pygame.K_p):
+                self.surface.fill((0,0,0))
+                self.needs_redraw = True
+                self.paused = not self.paused
+            elif event.type == pygame.QUIT:
+                self.gameover(full_exit=True)
+            elif pressed(pygame.K_ESCAPE):
+                self.gameover()
     
-            if self.paused:
-                return self.needs_redraw
+        if self.paused:
+            return self.needs_redraw
             
-            if self.agent_mode == True:
+        if self.agent_mode == True:
+            self.hard_drop()
+            
+        for event in events:
+            #Controls movement of the tetromino
+            if pressed(pygame.K_SPACE):
                 self.hard_drop()
-            
-            for event in events:
-                #Controls movement of the tetromino
-                if pressed(pygame.K_SPACE):
-                    self.hard_drop()
-                elif pressed(pygame.K_UP) or pressed(pygame.K_w):
-                    self.request_rotation()
-                elif pressed(pygame.K_LEFT) or pressed(pygame.K_a):
-                    self.request_movement('left')
-                    self.movement_keys['left'] = 1
-                elif pressed(pygame.K_RIGHT) or pressed(pygame.K_d):
-                    self.request_movement('right')
-                    self.movement_keys['right'] = 1
+            elif pressed(pygame.K_UP) or pressed(pygame.K_w):
+                self.request_rotation()
+            elif pressed(pygame.K_LEFT) or pressed(pygame.K_a):
+                self.request_movement('left')
+                self.movement_keys['left'] = 1
+            elif pressed(pygame.K_RIGHT) or pressed(pygame.K_d):
+                self.request_movement('right')
+                self.movement_keys['right'] = 1
     
-                elif unpressed(pygame.K_LEFT) or unpressed(pygame.K_a):
-                    self.movement_keys['left'] = 0
-                    self.movement_keys_timer = (-self.movement_keys_speed)*2
-                elif unpressed(pygame.K_RIGHT) or unpressed(pygame.K_d):
-                    self.movement_keys['right'] = 0
-                    self.movement_keys_timer = (-self.movement_keys_speed)*2
+            elif unpressed(pygame.K_LEFT) or unpressed(pygame.K_a):
+                self.movement_keys['left'] = 0
+                self.movement_keys_timer = (-self.movement_keys_speed)*2
+            elif unpressed(pygame.K_RIGHT) or unpressed(pygame.K_d):
+                self.movement_keys['right'] = 0
+                self.movement_keys_timer = (-self.movement_keys_speed)*2
     
     
     
@@ -254,6 +253,11 @@ class Matris(object):
                     self.score = 0
                     self.lines = 0
                     self.board = agent.board(self.create_board_representation())
+                    self.board.set_board_height()
+                    self.board.set_holes()
+                    self.board.set_column_differences()
+                    self.agent.set_current_board(self.board)
+                    print(str(self.board))
                     new_seed = self.agent.load_new_seed()
                     if new_seed == None:
                         try:
@@ -265,6 +269,12 @@ class Matris(object):
                     random.seed(new_seed)
                     self.next_tetromino = random.choice(list_of_tetrominoes)
                     self.set_tetrominoes()
+
+                    #Agent's first move of the new game
+                    self.tetromino_placement = self.agent.make_move()
+                    self.tetromino_position = (0,self.tetromino_placement[2])
+                    for rotations in range(self.tetromino_placement[0]):
+                        self.request_rotation()
                 else:
                     exit()
             else:
