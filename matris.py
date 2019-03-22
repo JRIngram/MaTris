@@ -44,13 +44,13 @@ class Matris(object):
     agent_mode = True #used to check if agent is playing. Causes hard-drops to always happen.
     if agent_mode == True:
         if (sys.argv[1] == "-hh"):
-            agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.1, epsilon_minimum=0.01, memory_size=1000, sample_size=2, reset_steps=1000, height=True, holes=True)
+            agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.01, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000, height=True, holes=True)
         elif (sys.argv[1] == "-ho"):
-            agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.1, epsilon_minimum=0.01, memory_size=1000, sample_size=2, reset_steps=1000, holes=True)
+            agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.01, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000, holes=True)
         elif (sys.argv[1] == "-hi"):
-            agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.1, epsilon_minimum=0.01, memory_size=1000, sample_size=2, reset_steps=1000, height=True)
+            agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.01, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000, height=True)
         elif (sys.argv[1] == "-no"):
-            agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.1, epsilon_minimum=0.01, memory_size=1000, sample_size=2, reset_steps=1000)
+            agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.01, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000)
         else:
             raise Exception( error_message = "\n\nError inputting command line arguments\nUsage:\n[mode] [number of episodes]\nmode:\n\t-hh - holes and height and column differences\n\t-ho - holes and column differences\n\t-hi - height and column differences\n\t-no - column differences only")    
     seed = agent.load_new_seed()
@@ -249,6 +249,7 @@ class Matris(object):
         write_score(self.score)
         
         if full_exit:
+            print("Runs completed.")
             exit()
         else:
             if self.agent_mode == True:
@@ -286,7 +287,7 @@ class Matris(object):
                     for rotations in range(self.tetromino_placement[0]):
                         self.request_rotation()
                 else:
-                    exit()
+                    self.gameover(full_exit=True)
             else:
                 raise GameOver("Sucker!")
 
