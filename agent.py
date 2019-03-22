@@ -220,7 +220,17 @@ class agent():
         self.target_net = copy.deepcopy(self.current_net)
         
         #Create a csv file to store results
-        self.file_path = "results/results-" + str(time.strftime("%d-%m-%y_%H:%M:%S")) + ".csv"
+        #Create file path depending on mode
+        if self.holes == False and self.height == False:
+            self.file_path = "results/NO-results-" + str(time.strftime("%d-%m-%y_%H:%M:%S")) + ".csv"
+        elif self.holes == True and self.height == False:
+            self.file_path = "results/HO-results-" + str(time.strftime("%d-%m-%y_%H:%M:%S")) + ".csv"
+        elif self.holes == False and self.height == True:
+            self.file_path = "results/HI-results-" + str(time.strftime("%d-%m-%y_%H:%M:%S")) + ".csv"
+        elif self.holes == True and self.height == True:
+            self.file_path = "results/HH-results-" + str(time.strftime("%d-%m-%y_%H:%M:%S")) + ".csv"
+        else:
+            self.file_path = "results/results-" + str(time.strftime("%d-%m-%y_%H:%M:%S")) + ".csv"
         with open(self.file_path, 'w+') as results_file:
             results_file.write("episode,results" + "\n")
             

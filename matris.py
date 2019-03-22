@@ -6,6 +6,7 @@ import os
 import kezmenu
 import agent
 import time
+import sys
 
 from tetrominoes import list_of_tetrominoes
 from tetrominoes import rotate
@@ -39,10 +40,19 @@ TRICKY_CENTERX = WIDTH-(WIDTH-(MATRIS_OFFSET+BLOCKSIZE*MATRIX_WIDTH+BORDERWIDTH*
 VISIBLE_MATRIX_HEIGHT = MATRIX_HEIGHT - 2
 
 class Matris(object):
-    
     board = agent.board()
-    agent = agent.agent([],99999, random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.1, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000, height=False, holes=False)
     agent_mode = True #used to check if agent is playing. Causes hard-drops to always happen.
+    if agent_mode == True:
+        if (sys.argv[1] == "-hh"):
+            agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.1, epsilon_minimum=0.01, memory_size=1000, sample_size=2, reset_steps=1000, height=True, holes=True)
+        elif (sys.argv[1] == "-ho"):
+            agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.1, epsilon_minimum=0.01, memory_size=1000, sample_size=2, reset_steps=1000, holes=True)
+        elif (sys.argv[1] == "-hi"):
+            agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.1, epsilon_minimum=0.01, memory_size=1000, sample_size=2, reset_steps=1000, height=True)
+        elif (sys.argv[1] == "-no"):
+            agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.1, epsilon_minimum=0.01, memory_size=1000, sample_size=2, reset_steps=1000)
+        else:
+            raise Exception( error_message = "\n\nError inputting command line arguments\nUsage:\n[mode] [number of episodes]\nmode:\n\t-hh - holes and height and column differences\n\t-ho - holes and column differences\n\t-hi - height and column differences\n\t-no - column differences only")    
     seed = agent.load_new_seed()
     random.seed(seed)
     tetromino_placement = None
@@ -417,7 +427,6 @@ class Matris(object):
             '''
             if self.agent_mode == True:
                     punishment = -1000 #Punishment for reaching a terminal state
-                    memory = [self.agent.previous_state, self.agent.previous_action, punishment, self.agent.get_current_board(), True]
                     self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, punishment, self.agent.get_current_board(), True)
                     self.agent.update_approximater()
                     self.agent.reset_approximaters()
