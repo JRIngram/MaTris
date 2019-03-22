@@ -41,7 +41,7 @@ VISIBLE_MATRIX_HEIGHT = MATRIX_HEIGHT - 2
 class Matris(object):
     
     board = agent.board()
-    agent = agent.agent([],99999, random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.1, epsilon_minimum=0.01, memory_size=2, sample_size=2, reset_steps=20)
+    agent = agent.agent([],99999, random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.1, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000, height=False, holes=False)
     agent_mode = True #used to check if agent is playing. Causes hard-drops to always happen.
     seed = agent.load_new_seed()
     random.seed(seed)
@@ -458,6 +458,10 @@ class Matris(object):
             self.board.set_column_differences()
             print(str(self.board))
             print("Column Height Differences:" + str(self.board.column_differences))
+            if self.agent.holes == True:
+                print("Holes: " + str(self.board.get_holes()))
+            if self.agent.holes == False:
+                print("Holes: " + str(self.board.get_board_height()))
             print(str(self.tetromino_placement))
             print("\nTetromino:")
             for line in range(0,len(self.agent.agent_tetromino[0])):
@@ -544,7 +548,7 @@ class Matris(object):
             shape = self.rotated()
         if position is None:
             position = self.tetromino_position
-    
+        
         copy = dict(self.matrix if matrix is None else matrix)
         posY, posX = position
         for x in range(posX, posX+len(shape)):
@@ -552,12 +556,12 @@ class Matris(object):
                 if (copy.get((y, x), False) is False and shape[y-posY][x-posX] # shape is outside the matrix
                     or # coordinate is occupied by something else which isn't a shadow
                     copy.get((y,x)) and shape[y-posY][x-posX] and copy[(y,x)][0] != 'shadow'):
-
+        
                     return False # Blend failed; `shape` at `position` breaks the matrix
-
+        
                 elif shape[y-posY][x-posX]:
                     copy[(y,x)] = ('shadow', self.shadow_block) if shadow else ('block', self.tetromino_block)
-
+    
         return copy
 
     def construct_surface_of_next_tetromino(self):

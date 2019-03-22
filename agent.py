@@ -169,11 +169,15 @@ class agent():
     event_memory = None
     steps_taken = 0
     
+    #Used to determine DQN input size
+    holes = False
+    height = False
+    
     #Used for state action recording
     previous_state = None
     previous_action = None
     
-    def __init__(self, tetromino=[], episodes=1, random_moves=True, rewards_as_lines=False, epsilon=0.1, discount=0.99,  epsilon_decay=0, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000):
+    def __init__(self, tetromino=[], episodes=1, random_moves=True, rewards_as_lines=False, epsilon=0.1, discount=0.99,  epsilon_decay=0, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000, height=False, holes=False):
         self.agent_tetromino = tetromino
         self.number_of_episodes = episodes
         self.rand = random.Random(self.load_new_seed())
@@ -189,11 +193,22 @@ class agent():
         self.event_memory = []
         self.sample_size = sample_size
         self.reset_steps = reset_steps 
-                
+        
+        self.holes = holes
+        self.height = height
         #Initialize action-value function Q with random weights
         self.current_net = Sequential()
-        #26 inputs, one for each possible tetromino cell (4 * 4) and one for each column height difference
-        self.current_net.add(Dense(30, input_dim=18, activation='tanh'))
+
+        #If-else statement to determine additional ANN input size.
+        if self.holes == False and self.height == False:
+            #Default of 18 inputs, one for each possible tetromino cell (4 * 2) and one for each column height difference
+            self.current_net.add(Dense(30, input_dim=18, activation='tanh'))
+        elif (self.holes == True and self.height == False) or (self.holes == False and self.height == True):
+            #Default of 18 plus 1 for the extra input of either height or holes.
+            self.current_net.add(Dense(30, input_dim=19, activation='tanh'))
+        elif self.holes == True and self.height == True:
+            #Default of 18 plus 1 for the extra input of either height or holes.
+            self.current_net.add(Dense(30, input_dim=20, activation='tanh'))
         self.current_net.add(Dense(30, activation='tanh'))
         #40 outputs, one for each possible action: 10 columns * 4 rotations.
         self.current_net.add(Dense(40, activation='linear'))
@@ -267,9 +282,15 @@ class agent():
         self.current_board = board  
     
     def get_current_board(self):
+        """
+        Returns the agent's current board
+        """
         return self.current_board
     
     def make_move(self):
+        """
+        Agent makes either a random move or a move using a deep Q network.
+        """
         game_over = self.check_game_over()
         if game_over == False:
             if self.random_moves == True:
@@ -282,6 +303,9 @@ class agent():
             return False
     
     def check_game_over(self):
+        """
+        Checks if the game board is in a terminal state
+        """
         if self.current_board.skyline_occuppied() == True:
             print("Game Over: Skyline occupied")
             return True
@@ -335,21 +359,63 @@ class agent():
         return placement
         
     def dqn_move(self):
+        """
+        Uses a deep Q network to create a move for the agent.
+        """
         self.steps_taken = self.steps_taken + 1
         choose_optimal = self.rand.random()
         tetromino_input = self.tetromino_to_input(self.agent_tetromino[0])
         if choose_optimal > self.epsilon:
-            possible_actions = self.find_valid_placements()     
-            state = np.array([[#Tetromino being used
-                                      tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
-                                      tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
-                                      #Current state of the board (differences in column height
-                                      self.current_board.column_differences[0],self.current_board.column_differences[1],
-                                      self.current_board.column_differences[2],self.current_board.column_differences[3],
-                                      self.current_board.column_differences[4],self.current_board.column_differences[5],
-                                      self.current_board.column_differences[6],self.current_board.column_differences[7],
-                                      self.current_board.column_differences[8],self.current_board.column_differences[9],                      
-                            ]])
+            possible_actions = self.find_valid_placements()
+            if self.holes == False and self.height == False:
+                state = np.array([[#Tetromino being used
+                    tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
+                    tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
+                    #Current state of the board (differences in column height)
+                    self.current_board.column_differences[0],self.current_board.column_differences[1],
+                    self.current_board.column_differences[2],self.current_board.column_differences[3],
+                    self.current_board.column_differences[4],self.current_board.column_differences[5],
+                    self.current_board.column_differences[6],self.current_board.column_differences[7],
+                    self.current_board.column_differences[8],self.current_board.column_differences[9],                      
+                    ]])
+            elif (self.holes == True and self.height == False):
+                state = np.array([[#Tetromino being used
+                    tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
+                    tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
+                    #Current state of the board (differences in column height and number of holes)
+                    self.current_board.column_differences[0],self.current_board.column_differences[1],
+                    self.current_board.column_differences[2],self.current_board.column_differences[3],
+                    self.current_board.column_differences[4],self.current_board.column_differences[5],
+                    self.current_board.column_differences[6],self.current_board.column_differences[7],
+                    self.current_board.column_differences[8],self.current_board.column_differences[9],
+                    self.current_board.get_holes()                   
+                ]])
+            elif (self.holes == False and self.height == True):
+                state = np.array([[#Tetromino being used
+                    tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
+                    tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
+                    #Current state of the board (differences in column height and maximum column height)
+                    self.current_board.column_differences[0],self.current_board.column_differences[1],
+                    self.current_board.column_differences[2],self.current_board.column_differences[3],
+                    self.current_board.column_differences[4],self.current_board.column_differences[5],
+                    self.current_board.column_differences[6],self.current_board.column_differences[7],
+                    self.current_board.column_differences[8],self.current_board.column_differences[9],
+                    self.current_board.get_board_height()                 
+                ]])
+            
+            elif self.holes == True and self.height == True:
+                state = np.array([[#Tetromino being used
+                    tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
+                    tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
+                    #Current state of the board (differences in column height and maximum column height)
+                    self.current_board.column_differences[0],self.current_board.column_differences[1],
+                    self.current_board.column_differences[2],self.current_board.column_differences[3],
+                    self.current_board.column_differences[4],self.current_board.column_differences[5],
+                    self.current_board.column_differences[6],self.current_board.column_differences[7],
+                    self.current_board.column_differences[8],self.current_board.column_differences[9],
+                    self.current_board.get_holes(), self.current_board.get_board_height()       
+                ]])
+
             predicted_values = self.query(state)
             optimal_placement = None
                         #rotation                #height                    #column - left trimmed
@@ -374,16 +440,7 @@ class agent():
                     if chosen_board.skyline_occuppied() == True:
                         print("Game Over: Option chosen where skyline occupied")
                         #Remember previous state and action
-                        previous_column_diffs = copy.deepcopy(self.current_board.column_differences)
-                        self.previous_state = [#Tetromino being used
-                                tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
-                                tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
-                                #Current state of the board (differences in column height) being stored to record S,A,R,S
-                                previous_column_diffs[0],previous_column_diffs[1],
-                                previous_column_diffs[2],previous_column_diffs[3],
-                                previous_column_diffs[4],previous_column_diffs[5],
-                                previous_column_diffs[6],previous_column_diffs[7],
-                                previous_column_diffs[8],previous_column_diffs[9]]
+                        self.previous_state = self.__remember_previous_state()
                         self.previous_action = copy.deepcopy(placement)
                         return False
                     else:
@@ -393,16 +450,7 @@ class agent():
             placement = self.choose_random_tetromino_placement()
         
         #Remember previous state and action
-        previous_column_diffs = copy.deepcopy(self.current_board.column_differences)
-        self.previous_state = [#Tetromino being used
-                                tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
-                                tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
-                                #Current state of the board (differences in column height) being stored to record S,A,R,S
-                                previous_column_diffs[0],previous_column_diffs[1],
-                                previous_column_diffs[2],previous_column_diffs[3],
-                                previous_column_diffs[4],previous_column_diffs[5],
-                                previous_column_diffs[6],previous_column_diffs[7],
-                                previous_column_diffs[8],previous_column_diffs[9]]
+        self.previous_state = self.__remember_previous_state()
         if placement != False:
             self.previous_action = copy.deepcopy(placement)
         return placement
@@ -700,24 +748,65 @@ class agent():
                 Perform: target = Reward + (GAMMA * SAMAX)
                 """
                 column_differences = next_state.column_differences
+                holes = next_state.get_holes()
+                height = next_state.get_board_height()
                 maximum_values = []
                 tetrominos = list_of_tetrominoes
                 for tetromino_shape in tetrominos:
                     tetromino = self.convert_tetromino(tetromino_shape)
                     #Loads a standard 4*2 tetromino input
                     tetromino_input = self.tetromino_to_input(tetromino)
-            
-                    #Loads the "next state" with the chosen tetromino into an numpy array
-                    next_state_inputs = np.array([[#Tetromino being used
-                                      tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
-                                      tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
-                                      #Current state of the board (differences in column height)
-                                      column_differences[0],column_differences[1],
-                                      column_differences[2],column_differences[3],
-                                      column_differences[4],column_differences[5],
-                                      column_differences[6],column_differences[7],
-                                      column_differences[8],column_differences[9],                      
-                            ]])
+                    
+                                        
+                    if self.holes == False and self.height == False:
+                        next_state_inputs = np.array([[#Tetromino being used
+                            tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
+                            tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
+                            #State of next board (differences in column height)
+                            column_differences[0],column_differences[1],
+                            column_differences[2],column_differences[3],
+                            column_differences[4],column_differences[5],
+                            column_differences[6],column_differences[7],
+                            column_differences[8],column_differences[9],                        
+                        ]])
+                    elif (self.holes == True and self.height == False):
+                        next_state_inputs = np.array([[#Tetromino being used
+                            tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
+                            tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
+                            #State of next board (differences in column height and number of holes)
+                            column_differences[0],column_differences[1],
+                            column_differences[2],column_differences[3],
+                            column_differences[4],column_differences[5],
+                            column_differences[6],column_differences[7],
+                            column_differences[8],column_differences[9],
+                            holes                 
+                        ]])
+                    elif (self.holes == False and self.height == True):
+                        next_state_inputs = np.array([[#Tetromino being used
+                            tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
+                            tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
+                            #State of next board (differences in column height and maximum height)
+                            column_differences[0],column_differences[1],
+                            column_differences[2],column_differences[3],
+                            column_differences[4],column_differences[5],
+                            column_differences[6],column_differences[7],
+                            column_differences[8],column_differences[9],
+                            height               
+                        ]])
+                    
+                    elif self.holes == True and self.height == True:
+                        next_state_inputs = np.array([[#Tetromino being used
+                            tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
+                            tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
+                            #State of next board (differences in column height, holes and maximum height)
+                            self.current_board.column_differences[0],self.current_board.column_differences[1],
+                            self.current_board.column_differences[2],self.current_board.column_differences[3],
+                            self.current_board.column_differences[4],self.current_board.column_differences[5],
+                            self.current_board.column_differences[6],self.current_board.column_differences[7],
+                            self.current_board.column_differences[8],self.current_board.column_differences[9],
+                            holes, height    
+                        ]])
+
                     
                     #Stores the 4 possible rotations for the tetromino
                     tetromino_rotations = []
@@ -756,8 +845,6 @@ class agent():
                                 maximum_value = value
                             elif maximum_value[0] < value[0]:
                                 maximum_value = value
-                        else:
-                            foo="bar"
                     except:
                         print("None value in approximator. Value ignored!")
                 
@@ -796,3 +883,59 @@ class agent():
             for tetromino_width in range (0, len(tetromino[0])):
                 tetromino_input[input_height][tetromino_width] = tetromino[input_height][tetromino_width]
         return tetromino_input
+    
+    def __remember_previous_state(self):
+            tetromino_input = self.tetromino_to_input(self.agent_tetromino[0])
+            previous_column_diffs = copy.deepcopy(self.current_board.column_differences)
+            if self.holes == False and self.height == False:
+                previous_state = [#Tetromino being used
+                    tetromino_input[0][0],tetromino_input[0][1],
+                    tetromino_input[0][2],tetromino_input[0][3],
+                    tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
+                    previous_column_diffs[0],previous_column_diffs[1],
+                    previous_column_diffs[2],previous_column_diffs[3],
+                    previous_column_diffs[4],previous_column_diffs[5],
+                    previous_column_diffs[6],previous_column_diffs[7],
+                    previous_column_diffs[8],previous_column_diffs[9]]
+                
+            elif (self.holes == True and self.height == False):
+                holes = copy.deepcopy(self.current_board.get_holes())
+                previous_state = [#Tetromino being used
+                    tetromino_input[0][0],tetromino_input[0][1],
+                    tetromino_input[0][2],tetromino_input[0][3],
+                    tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
+                    previous_column_diffs[0],previous_column_diffs[1],
+                    previous_column_diffs[2],previous_column_diffs[3],
+                    previous_column_diffs[4],previous_column_diffs[5],
+                    previous_column_diffs[6],previous_column_diffs[7],
+                    previous_column_diffs[8],previous_column_diffs[9],
+                    holes]
+            
+            elif (self.holes == False and self.height == True):
+                height = copy.deepcopy(self.current_board.get_board_height())
+                previous_state = [#Tetromino being used
+                    tetromino_input[0][0],tetromino_input[0][1],
+                    tetromino_input[0][2],tetromino_input[0][3],
+                    tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
+                    previous_column_diffs[0],previous_column_diffs[1],
+                    previous_column_diffs[2],previous_column_diffs[3],
+                    previous_column_diffs[4],previous_column_diffs[5],
+                    previous_column_diffs[6],previous_column_diffs[7],
+                    previous_column_diffs[8],previous_column_diffs[9],
+                    height]
+            
+            elif self.holes == True and self.height == True:
+                holes = copy.deepcopy(self.current_board.get_holes())
+                height = copy.deepcopy(self.current_board.get_board_height())
+                previous_state = [#Tetromino being used
+                    tetromino_input[0][0],tetromino_input[0][1],
+                    tetromino_input[0][2],tetromino_input[0][3],
+                    tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
+                    previous_column_diffs[0],previous_column_diffs[1],
+                    previous_column_diffs[2],previous_column_diffs[3],
+                    previous_column_diffs[4],previous_column_diffs[5],
+                    previous_column_diffs[6],previous_column_diffs[7],
+                    previous_column_diffs[8],previous_column_diffs[9],
+                    holes, height]
+            return previous_state
+                
