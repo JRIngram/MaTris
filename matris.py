@@ -154,65 +154,67 @@ class Matris(object):
                 
             pressed = lambda key: event.type == pygame.KEYDOWN and event.key == key
             unpressed = lambda key: event.type == pygame.KEYUP and event.key == key
-        
-            events = pygame.event.get()
-            #Controls pausing and quitting the game.
-            for event in events:
-                if pressed(pygame.K_p):
-                    self.surface.fill((0,0,0))
-                    self.needs_redraw = True
-                    self.paused = not self.paused
-                elif event.type == pygame.QUIT:
-                    self.gameover(full_exit=True)
-                elif pressed(pygame.K_ESCAPE):
-                    self.gameover()
-        
-            if self.paused:
-                return self.needs_redraw
-                
+            
             if self.agent_mode == True:
                 self.hard_drop()
-                
-            for event in events:
-                #Controls movement of the tetromino
-                if pressed(pygame.K_SPACE):
-                    self.hard_drop()
-                elif pressed(pygame.K_UP) or pressed(pygame.K_w):
-                    self.request_rotation()
-                elif pressed(pygame.K_LEFT) or pressed(pygame.K_a):
-                    self.request_movement('left')
-                    self.movement_keys['left'] = 1
-                elif pressed(pygame.K_RIGHT) or pressed(pygame.K_d):
-                    self.request_movement('right')
-                    self.movement_keys['right'] = 1
-        
-                elif unpressed(pygame.K_LEFT) or unpressed(pygame.K_a):
-                    self.movement_keys['left'] = 0
-                    self.movement_keys_timer = (-self.movement_keys_speed)*2
-                elif unpressed(pygame.K_RIGHT) or unpressed(pygame.K_d):
-                    self.movement_keys['right'] = 0
-                    self.movement_keys_timer = (-self.movement_keys_speed)*2
-        
-        
-        
-        
-                self.downwards_speed = self.base_downwards_speed ** (1 + self.level/10.)
-        
-                self.downwards_timer += timepassed
-                downwards_speed = self.downwards_speed*0.10 if any([pygame.key.get_pressed()[pygame.K_DOWN],
-                                                                    pygame.key.get_pressed()[pygame.K_s]]) else self.downwards_speed
-                if self.downwards_timer > downwards_speed:
-                    if not self.request_movement('down'): #Places tetromino if it cannot move further down
-                        self.lock_tetromino()
-        
-                    self.downwards_timer %= downwards_speed
-        
-        
-                if any(self.movement_keys.values()):
-                    self.movement_keys_timer += timepassed
-                if self.movement_keys_timer > self.movement_keys_speed:
-                    self.request_movement('right' if self.movement_keys['right'] else 'left')
-                    self.movement_keys_timer %= self.movement_keys_speed
+            
+            else:
+                events = pygame.event.get()
+                #Controls pausing and quitting the game.
+                for event in events:
+                    if pressed(pygame.K_p):
+                        self.surface.fill((0,0,0))
+                        self.needs_redraw = True
+                        self.paused = not self.paused
+                    elif event.type == pygame.QUIT:
+                        self.gameover(full_exit=True)
+                    elif pressed(pygame.K_ESCAPE):
+                        self.gameover()
+            
+                if self.paused:
+                    return self.needs_redraw
+
+            
+                for event in events:
+                    #Controls movement of the tetromino
+                    if pressed(pygame.K_SPACE):
+                        self.hard_drop()
+                    elif pressed(pygame.K_UP) or pressed(pygame.K_w):
+                        self.request_rotation()
+                    elif pressed(pygame.K_LEFT) or pressed(pygame.K_a):
+                        self.request_movement('left')
+                        self.movement_keys['left'] = 1
+                    elif pressed(pygame.K_RIGHT) or pressed(pygame.K_d):
+                        self.request_movement('right')
+                        self.movement_keys['right'] = 1
+            
+                    elif unpressed(pygame.K_LEFT) or unpressed(pygame.K_a):
+                        self.movement_keys['left'] = 0
+                        self.movement_keys_timer = (-self.movement_keys_speed)*2
+                    elif unpressed(pygame.K_RIGHT) or unpressed(pygame.K_d):
+                        self.movement_keys['right'] = 0
+                        self.movement_keys_timer = (-self.movement_keys_speed)*2
+            
+            
+            
+            
+                    self.downwards_speed = self.base_downwards_speed ** (1 + self.level/10.)
+            
+                    self.downwards_timer += timepassed
+                    downwards_speed = self.downwards_speed*0.10 if any([pygame.key.get_pressed()[pygame.K_DOWN],
+                                                                        pygame.key.get_pressed()[pygame.K_s]]) else self.downwards_speed
+                    if self.downwards_timer > downwards_speed:
+                        if not self.request_movement('down'): #Places tetromino if it cannot move further down
+                            self.lock_tetromino()
+            
+                        self.downwards_timer %= downwards_speed
+            
+            
+                    if any(self.movement_keys.values()):
+                        self.movement_keys_timer += timepassed
+                    if self.movement_keys_timer > self.movement_keys_speed:
+                        self.request_movement('right' if self.movement_keys['right'] else 'left')
+                        self.movement_keys_timer %= self.movement_keys_speed
                 
         except:
             print("Error in agent running")
@@ -439,12 +441,9 @@ class Matris(object):
                 self.score += 100 * (lines_cleared**2) * self.combo
     
                 if not self.played_highscorebeaten_sound and self.score > self.highscore:
-                    if self.highscore != 0:
-                        self.highscorebeaten_sound.play()
                     self.played_highscorebeaten_sound = True
     
             if self.lines >= self.level*10:
-                self.levelup_sound.play()
                 self.level += 1
 
                 self.combo = self.combo + 1 if lines_cleared else 1
@@ -452,7 +451,6 @@ class Matris(object):
         self.set_tetrominoes()
 
         if not self.blend() and lines_cleared != -1:
-            #self.gameover_sound.play()
             self.gameover()
         
         self.needs_redraw = True
@@ -489,8 +487,7 @@ class Matris(object):
             if self.agent.check_game_over() and lines_cleared != -1:  #Ends episode if previous turn was terminal
                 #End of episode
                 if self.agent.random_moves == False:
-                    punishment = -1000 #Punishment for reaching a terminal state
-                    self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, punishment, self.agent.get_current_board(), True)
+                    self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, -1000, self.agent.get_current_board(), True)
                     self.agent.update_approximater()
                     self.agent.reset_approximaters()
                 self.gameover()
@@ -499,8 +496,7 @@ class Matris(object):
                 if self.tetromino_placement == False: 
                     if self.agent.random_moves == False:
                         #Tetromino placed in state that causes a game over
-                        punishment = -1000 #Punishment for reaching a terminal state
-                        self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, punishment, self.agent.get_current_board(), True)
+                        self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, -1000, self.agent.get_current_board(), True)
                         self.agent.update_approximater()
                         self.agent.reset_approximaters()
                     self.gameover()
