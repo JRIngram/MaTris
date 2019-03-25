@@ -213,7 +213,7 @@ class agent():
         #40 outputs, one for each possible action: 10 columns * 4 rotations.
         self.current_net.add(Dense(40, activation='linear'))
         self.current_net.compile(loss='mean_squared_error',
-              optimizer='adam',
+              optimizer='sgd',
               metrics=['accuracy'])
         
         #Initialize target action-value function Q
