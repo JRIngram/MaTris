@@ -726,7 +726,7 @@ class agent():
         if self.rewards_as_lines == True:
             self.update_score(score)
             reward = self.set_lines_cleared(lines_cleared)
-            return reward * reward
+            return reward ** 2
         else:
             reward = self.update_score(score)
             self.set_lines_cleared(lines_cleared)
