@@ -226,7 +226,7 @@ class agent():
         #40 outputs, one for each possible action: 10 columns * 4 rotations.
         self.current_net.add(Dense(40, activation='linear'))
         self.current_net.compile(loss='mean_squared_error',
-              optimizer='adam',
+              optimizer='sgd',
               metrics=['accuracy'])
         
         #Initialize target action-value function Q
@@ -726,7 +726,7 @@ class agent():
         if self.rewards_as_lines == True:
             self.update_score(score)
             reward = self.set_lines_cleared(lines_cleared)
-            return reward
+            return reward * reward
         else:
             reward = self.update_score(score)
             self.set_lines_cleared(lines_cleared)
