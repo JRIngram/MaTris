@@ -76,7 +76,7 @@ class Matris(object):
         self.set_tetrominoes()
         
         if self.agent_mode == True:
-            #Creates a reperesentation of the initial board
+            #Creates a representation of the initial board
             self.board.update_board_representation(self.create_board_representation())
             self.board.set_board_height()
             self.board.set_holes()
@@ -418,28 +418,24 @@ class Matris(object):
         self.matrix = self.blend()
 
         lines_cleared = self.remove_lines()
-        if lines_cleared == -1: #Indicates that clearing the lines failed. This is due to the tetromino clearing reaching higher than 2 above the skyline.
-            '''
+        if lines_cleared == -1 and self.agent_mode == True: #Indicates that clearing the lines failed. This is due to the tetromino clearing reaching higher than 2 above the skyline.
+            """
             End episode:
                 game will be in a terminal state as the skyline was occupied 3 cells high
                 however MaTris can only handle the skyline being occupied by 2 cells high.
             
             This causes the memory to be stored as if it were a terminal state.
             The board is then cleared, and a new episode restarted.
-            '''
-            if self.agent_mode == True:
-                    punishment = -1000 #Punishment for reaching a terminal state
-                    self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, punishment, self.agent.get_current_board(), True)
-                    self.agent.update_approximater()
-                    self.agent.reset_approximaters()
+            """
+            self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, -1000, self.agent.get_current_board(), True)
+            self.agent.update_approximater()
+            self.agent.reset_approximaters()
             self.gameover()
+        
         else: 
-    
             self.lines += lines_cleared
     
             if lines_cleared:
-                if lines_cleared >= 4:
-                    self.linescleared_sound.play()
                 self.score += 100 * (lines_cleared**2) * self.combo
     
                 if not self.played_highscorebeaten_sound and self.score > self.highscore:
