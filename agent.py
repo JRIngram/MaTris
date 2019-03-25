@@ -2,13 +2,10 @@
 Module used to create a Tetris playing agent
 Created by JRIngram 
 """
-import copy, time, random, csv
 from tetrominoes import list_of_tetrominoes
-
-import keras
+import copy, time, random, csv
 from keras.models import Sequential
 from keras.layers import Dense
-import tensorflow as tf
 import numpy as np
 
 class board():
@@ -17,51 +14,55 @@ class board():
     0 = empty.
     1 = full.
     """
-    boardRepresentation = []
+    board_representation = []
     board_height = 0
     cum_height = 0 #Cumulative height of the board
     column_heights = 0
     holes_per_column = []
     column_differences = []
     
-    def __init__(self, boardRepresentation=[]):
-        self.boardRepresentation = boardRepresentation
+    def __init__(self, board_representation=[]):
+        """
+        Takes a 2D array as input to create a board representation
+        """
+        self.board_representation = board_representation
         
-    def update_board_representation(self, boardRepresentation):
+    def update_board_representation(self, board_representation):
         """
-        Creates an update board representation
+        Creates an updated board representation from a 2D array
         """
-        self.boardRepresentation = boardRepresentation
+        self.board_representation = board_representation
 
     def get_board_representation(self):    
         """
         Returns the current board representation
         """
-        return self.boardRepresentation
+        return self.board_representation
 
     def __str__(self):
         """
         Returns the board as a series of rows, each corresponding to a row in the board.
         """
         #Note: board will be 22 in height as Matris uses the top two columns as the initial appearance of tetrominos on the board
-        boardString = ""
-        for row in self.boardRepresentation:
+        board_string = ""
+        for row in self.board_representation:
             for x in range(len(row)):
                 if(x == len(row) - 1):
-                    boardString = boardString + str(row[x]) + "\n"
+                    board_string = board_string + str(row[x]) + "\n"
                 else:
-                    boardString = boardString + str(row[x]) + ","
-        return boardString
+                    board_string = board_string + str(row[x]) + ","
+        return board_string
 
     def set_board_height(self):
         """
         Calculates the highest column height in the board.
+        Also assigns the height of each individual column when calculating
         Also assigns cumulative height value: column1(height) + column2(height) + ... + columnN(height)
         """
         column_heights = [];
-        for x in range(len(self.boardRepresentation[0])): #Number of columns
-            for y in range (len(self.boardRepresentation)): #Number of rows
-                if(self.boardRepresentation[y][x] == 1):
+        for x in range(len(self.board_representation[0])): #Number of columns
+            for y in range (len(self.board_representation)): #Number of rows
+                if(self.board_representation[y][x] == 1):
                     column_heights.append(22 - y) #Matris height is 22
                     break
                 elif(y == 21): #Column is empty
@@ -89,29 +90,24 @@ class board():
             e.g. if cell was full at height 3, and all cells below that were empty, there would be 2 holes.  
         """
         holes_per_column = []
-        for x in range(len(self.boardRepresentation[0])): #Number of columns
+        for x in range(len(self.board_representation[0])): #Number of columns
             holes_in_column = 0
             below_full_cell = False
-            for y in range (len(self.boardRepresentation)): #Number of rows
-                if(self.boardRepresentation[y][x] == 1 and below_full_cell == False):
+            for y in range (len(self.board_representation)): #Number of rows
+                if(self.board_representation[y][x] == 1 and below_full_cell == False):
+                    #Marks if a column has an occupied cell
                     below_full_cell = True
-                if(below_full_cell == True and self.boardRepresentation[y][x] == 0):
+                if(below_full_cell == True and self.board_representation[y][x] == 0):
+                    #Adds +1 to hole count for each empty cell below an occupied cell
                     holes_in_column = holes_in_column + 1
             holes_per_column.append(holes_in_column)
         self.holes_per_column = holes_per_column
     
     def get_holes(self):
+        """
+        Returns the sum of holes per column
+        """
         return sum(self.holes_per_column)
-    
-    def skyline_occuppied(self):
-        """
-        Checks if the top two rows of the board representation is occupied, which signals that the skyline is occupied.
-        Returns true if occupied;false if unoccupied. 
-        """
-        if 1 in self.boardRepresentation[0] or 1 in self.boardRepresentation[1]:
-            return True
-        else:
-            return False
     
     def set_column_differences(self):
         """
@@ -119,9 +115,9 @@ class board():
         This is calculate for all columns and then returned as a list.
         """
         column_heights = [];
-        for x in range(len(self.boardRepresentation[0])): #Number of columns
-            for y in range (len(self.boardRepresentation)): #Number of rows
-                if(self.boardRepresentation[y][x] == 1):
+        for x in range(len(self.board_representation[0])): #Number of columns
+            for y in range (len(self.board_representation)): #Number of rows
+                if(self.board_representation[y][x] == 1):
                     column_heights.append(22 - y) #Matris height is 22
                     break
                 elif(y == 21): #Column is empty
@@ -138,6 +134,23 @@ class board():
             elif column_differences[x] < -4:
                 column_differences[x] = -4
         self.column_differences = column_differences
+    
+    def get_column_differences(self):
+        """
+        Returns the column differences
+        """
+        return self.column_differences
+    
+    def skyline_occuppied(self):
+        """
+        Checks if the top two rows of the board representation is occupied, which signals that the skyline is occupied.
+        Returns true if occupied;false if unoccupied. 
+        """
+        if 1 in self.board_representation[0] or 1 in self.board_representation[1]:
+            return True
+        else:
+            return False
+    
     
 class agent():
     """
@@ -522,13 +535,13 @@ class agent():
                 for tet_width in range(tetromino_width): #for each column in tetromino
                                                     #moves up the placeable row   #the x-axis to place the tetromino
                                                       
-                    test_board.boardRepresentation[placeable_height - tet_height][column+tet_width] = test_board.boardRepresentation[placeable_height - tet_height][column+tet_width] + tetromino[tetromino_height - tet_height][tet_width]
+                    test_board.board_representation[placeable_height - tet_height][column+tet_width] = test_board.board_representation[placeable_height - tet_height][column+tet_width] + tetromino[tetromino_height - tet_height][tet_width]
             
             #Checks if the current position being tested allows for valid placement
             can_place = True
-            for check_row in range(len(test_board.boardRepresentation)):
-                for check_column in range(len(test_board.boardRepresentation[check_row])):
-                    if test_board.boardRepresentation[check_row][check_column] != 1 and test_board.boardRepresentation[check_row][check_column] != 0:
+            for check_row in range(len(test_board.board_representation)):
+                for check_column in range(len(test_board.board_representation[check_row])):
+                    if test_board.board_representation[check_row][check_column] != 1 and test_board.board_representation[check_row][check_column] != 0:
                         can_place = False
                         break
                 if can_place == False:

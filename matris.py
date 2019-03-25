@@ -82,7 +82,7 @@ class Matris(object):
             self.board.set_holes()
             self.board.set_column_differences()
             print(str(self.board))
-            print("Column Height Differences:" + str(self.board.column_differences))
+            print("Column Height Differences:" + str(self.board.get_column_differences()))
             
             #Set up the the agent
             self.agent.set_current_board(self.board)
@@ -468,7 +468,7 @@ class Matris(object):
             self.board.set_holes()
             self.board.set_column_differences()
             print(str(self.board))
-            print("Column Height Differences:" + str(self.board.column_differences))
+            print("Column Height Differences:" + str(self.board.get_column_differences()))
             if self.agent.holes == True:
                 print("Holes: " + str(self.board.get_holes()))
             if self.agent.holes == False:
@@ -544,7 +544,7 @@ class Matris(object):
         except:
             print("ERROR REMOVING LINES:\t DEBUG INFORMATION")
             print(self.tetromino_placement)
-            print(self.board.boardRepresentation)
+            print(self.board.board_representation)
             return -1
 
     def blend(self, shape=None, position=None, matrix=None, shadow=False):
@@ -630,7 +630,7 @@ class Game(object):
                         self.redraw()
                     except:
                         print(str(self.matris.board))
-                        print("Column Height Differences:" + str(self.matris.board.column_differences))
+                        print("Column Height Differences:" + str(self.matris.board.get_column_differences()))
                         print(str(self.matris.tetromino_placement))
                         print("\nTetromino:")
                         for line in range(0,len(self.matris.agent.agent_tetromino[0])):
