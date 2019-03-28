@@ -297,7 +297,9 @@ class Matris(object):
                         self.request_rotation()
 
                 else:
-                    self.gameover(full_exit=True)
+                    print("Runs completed.")
+                    self.serialize_agent()
+                    exit()
             else:
                 raise GameOver("Sucker!")
 
