@@ -149,12 +149,16 @@ class Matris(object):
         """
         Main game loop
         """
-        try:
-            self.needs_redraw = False
-                
+        self.needs_redraw = False
+            
+        if self.agent_mode == True:
+            self.hard_drop()
+            
+        else:
+            #Handles player input
             pressed = lambda key: event.type == pygame.KEYDOWN and event.key == key
             unpressed = lambda key: event.type == pygame.KEYUP and event.key == key
-        
+            
             events = pygame.event.get()
             #Controls pausing and quitting the game.
             for event in events:
@@ -170,10 +174,8 @@ class Matris(object):
             if self.paused:
                 return self.needs_redraw
                 
-            if self.agent_mode == True:
-                self.hard_drop()
-                
             for event in events:
+                #Handles player input
                 #Controls movement of the tetromino
                 if pressed(pygame.K_SPACE):
                     self.hard_drop()
@@ -279,14 +281,16 @@ class Matris(object):
                             exit()
                     print("Generating new game with seed: " + str(new_seed))
                     random.seed(new_seed)
-                    self.next_tetromino = random.choice(list_of_tetrominoes)
                     self.set_tetrominoes()
-
+                    self.next_tetromino = random.choice(list_of_tetrominoes)
+                    self.agent.set_agent_tetromino(self.current_tetromino)
+                    
                     #Agent's first move of the new game
                     self.tetromino_placement = self.agent.make_move()
                     self.tetromino_position = (0,self.tetromino_placement[2])
                     for rotations in range(self.tetromino_placement[0]):
                         self.request_rotation()
+
                 else:
                     self.gameover(full_exit=True)
             else:
@@ -418,7 +422,7 @@ class Matris(object):
         self.matrix = self.blend()
 
         lines_cleared = self.remove_lines()
-        if lines_cleared == -1: #Indicates that clearing the lines failed. This is due to the tetromino clearing reaching higher than 2 above the skyline.
+        if lines_cleared == -1: #Indicates that clearing the lines failed. This is due to the tetromino reaching higher than 2 above the skyline.
             '''
             End episode:
                 game will be in a terminal state as the skyline was occupied 3 cells high
@@ -471,8 +475,8 @@ class Matris(object):
             print("Column Height Differences:" + str(self.board.column_differences))
             if self.agent.holes == True:
                 print("Holes: " + str(self.board.get_holes()))
-            if self.agent.holes == False:
-                print("Holes: " + str(self.board.get_board_height()))
+            if self.agent.height == True:
+                print("Height: " + str(self.board.get_board_height()))
             print(str(self.tetromino_placement))
             print("\nTetromino:")
             for line in range(0,len(self.agent.agent_tetromino[0])):
@@ -500,15 +504,17 @@ class Matris(object):
                 self.gameover()
             else:   #Continue episode as not in terminal state
                 self.tetromino_placement = self.agent.make_move()
+                
                 if self.tetromino_placement == False: 
+                    #Tetromino placed in state that causes a game over
                     if self.agent.random_moves == False:
-                        #Tetromino placed in state that causes a game over
                         punishment = -1000 #Punishment for reaching a terminal state
                         self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, punishment, self.agent.get_current_board(), True)
                         self.agent.update_approximater()
                         self.agent.reset_approximaters()
                     self.gameover()
                 else:
+                    #Tetromino placed in a non-terminal state.
                     if self.agent.random_moves == False:
                         self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, reward, self.agent.get_current_board(), False)
                         self.agent.update_approximater()
