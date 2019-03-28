@@ -76,13 +76,13 @@ class Matris(object):
         self.set_tetrominoes()
         
         if self.agent_mode == True:
-            #Creates a reperesentation of the initial board
+            #Creates a representation of the initial board
             self.board.update_board_representation(self.create_board_representation())
             self.board.set_board_height()
             self.board.set_holes()
             self.board.set_column_differences()
             print(str(self.board))
-            print("Column Height Differences:" + str(self.board.column_differences))
+            print("Column Height Differences:" + str(self.board.get_column_differences()))
             
             #Set up the the agent
             self.agent.set_current_board(self.board)
@@ -423,37 +423,31 @@ class Matris(object):
         self.matrix = self.blend()
 
         lines_cleared = self.remove_lines()
+        
         if lines_cleared == -1: #Indicates that clearing the lines failed. This is due to the tetromino reaching higher than 2 above the skyline.
-            '''
+            """
             End episode:
                 game will be in a terminal state as the skyline was occupied 3 cells high
                 however MaTris can only handle the skyline being occupied by 2 cells high.
             
             This causes the memory to be stored as if it were a terminal state.
             The board is then cleared, and a new episode restarted.
-            '''
-            if self.agent_mode == True:
-                    punishment = -1000 #Punishment for reaching a terminal state
-                    self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, punishment, self.agent.get_current_board(), True)
-                    self.agent.update_approximater()
-                    self.agent.reset_approximaters()
+            """
+            self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, -1000, self.agent.get_current_board(), True)
+            self.agent.update_approximater()
+            self.agent.reset_approximaters()
             self.gameover()
+        
         else: 
-    
             self.lines += lines_cleared
     
             if lines_cleared:
-                if lines_cleared >= 4:
-                    self.linescleared_sound.play()
                 self.score += 100 * (lines_cleared**2) * self.combo
     
                 if not self.played_highscorebeaten_sound and self.score > self.highscore:
-                    if self.highscore != 0:
-                        self.highscorebeaten_sound.play()
                     self.played_highscorebeaten_sound = True
     
             if self.lines >= self.level*10:
-                self.levelup_sound.play()
                 self.level += 1
 
                 self.combo = self.combo + 1 if lines_cleared else 1
@@ -461,7 +455,6 @@ class Matris(object):
         self.set_tetrominoes()
 
         if not self.blend() and lines_cleared != -1:
-            #self.gameover_sound.play()
             self.gameover()
         
         self.needs_redraw = True
@@ -473,7 +466,7 @@ class Matris(object):
             self.board.set_holes()
             self.board.set_column_differences()
             print(str(self.board))
-            print("Column Height Differences:" + str(self.board.column_differences))
+            print("Column Height Differences:" + str(self.board.get_column_differences()))
             if self.agent.holes == True:
                 print("Holes: " + str(self.board.get_holes()))
             if self.agent.height == True:
@@ -498,8 +491,7 @@ class Matris(object):
             if self.agent.check_game_over() and lines_cleared != -1:  #Ends episode if previous turn was terminal
                 #End of episode
                 if self.agent.random_moves == False:
-                    punishment = -1000 #Punishment for reaching a terminal state
-                    self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, punishment, self.agent.get_current_board(), True)
+                    self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, -1000, self.agent.get_current_board(), True)
                     self.agent.update_approximater()
                     self.agent.reset_approximaters()
                 self.gameover()
@@ -509,8 +501,8 @@ class Matris(object):
                 if self.tetromino_placement == False: 
                     #Tetromino placed in state that causes a game over
                     if self.agent.random_moves == False:
-                        punishment = -1000 #Punishment for reaching a terminal state
-                        self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, punishment, self.agent.get_current_board(), True)
+                        #Tetromino placed in state that causes a game over
+                        self.agent.remember_state_action(self.agent.previous_state, self.agent.previous_action, -1000, self.agent.get_current_board(), True)
                         self.agent.update_approximater()
                         self.agent.reset_approximaters()
                     self.gameover()
@@ -551,7 +543,7 @@ class Matris(object):
         except:
             print("ERROR REMOVING LINES:\t DEBUG INFORMATION")
             print(self.tetromino_placement)
-            print(self.board.boardRepresentation)
+            print(self.board.board_representation)
             return -1
 
     def blend(self, shape=None, position=None, matrix=None, shadow=False):
