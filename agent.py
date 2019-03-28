@@ -235,16 +235,16 @@ class agent():
         #Create a csv file to store results
         #Create file path depending on mode
         if self.holes == False and self.height == False:
-            self.file_path = "results/NO-results-" + str(time.strftime("%d-%m-%y_%H:%M:%S")) + ".csv"
+            self.file_path = "results/NO-results-" + str(time.strftime("%d-%m-%y_%H:%M:%S"))
         elif self.holes == True and self.height == False:
-            self.file_path = "results/HO-results-" + str(time.strftime("%d-%m-%y_%H:%M:%S")) + ".csv"
+            self.file_path = "results/HO-results-" + str(time.strftime("%d-%m-%y_%H:%M:%S"))
         elif self.holes == False and self.height == True:
-            self.file_path = "results/HI-results-" + str(time.strftime("%d-%m-%y_%H:%M:%S")) + ".csv"
+            self.file_path = "results/HI-results-" + str(time.strftime("%d-%m-%y_%H:%M:%S"))
         elif self.holes == True and self.height == True:
-            self.file_path = "results/HH-results-" + str(time.strftime("%d-%m-%y_%H:%M:%S")) + ".csv"
+            self.file_path = "results/HH-results-" + str(time.strftime("%d-%m-%y_%H:%M:%S"))
         else:
-            self.file_path = "results/results-" + str(time.strftime("%d-%m-%y_%H:%M:%S")) + ".csv"
-        with open(self.file_path, 'w+') as results_file:
+            self.file_path = "results/results-" + str(time.strftime("%d-%m-%y_%H:%M:%S"))
+        with open(self.file_path + str(".csv"), 'w+') as results_file:
             results_file.write("episode,results" + "\n")
             
     
@@ -383,6 +383,7 @@ class agent():
                 
         #Check if top two rows filled
         placement[2] = placement[2] - possible_placements[rotation][placement_option][0][3] #Corrects column placement after trimming
+        self.previous_state = self.__format_previous_state()
         return placement
         
     def dqn_move(self):
@@ -621,7 +622,7 @@ class agent():
         number of lines cleared to the file results.csv
         """
         episode_results = [str(self.current_episode),str(self.lines_cleared)]
-        with open(self.file_path, 'a') as results:
+        with open(self.file_path + str(".csv"), 'a') as results:
             writer = csv.writer(results)
             writer.writerow(episode_results)
             results.close()
@@ -972,5 +973,5 @@ class agent():
                 previous_column_diffs[6],previous_column_diffs[7],
                 previous_column_diffs[8],previous_column_diffs[9],
                 holes, height]
-            return previous_state
+        return previous_state
                 

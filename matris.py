@@ -5,8 +5,8 @@ import random
 import os
 import kezmenu
 import agent
-import time
 import sys
+import pickle
 
 from tetrominoes import list_of_tetrominoes
 from tetrominoes import rotate
@@ -253,7 +253,9 @@ class Matris(object):
         write_score(self.score)
         
         if full_exit:
-            print("Runs completed.")
+            if self.agent_mode == True:
+                print("Runs completed.")
+                self.serialize_agent()
             exit()
         else:
             if self.agent_mode == True:
@@ -603,6 +605,12 @@ class Matris(object):
             board.append(lines[i])
         
         return board
+    
+    def serialize_agent(self):
+        agent_information = [self.agent.epsilon, self.agent.holes, self.agent.height, self.agent.current_net]
+        handler = open(self.agent.file_path + ".obj", 'wb')
+        pickle.dump(agent_information, handler)
+        handler.close()
 
 class Game(object):
     def main(self, screen):
