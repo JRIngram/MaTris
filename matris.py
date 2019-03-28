@@ -51,8 +51,10 @@ class Matris(object):
             agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.01, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000, height=True)
         elif (sys.argv[1] == "-no"):
             agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.01, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000)
+        elif (sys.argv[1] == "-lo"):
+            agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.01, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000, filepath = sys.argv[3])
         else:
-            raise Exception( error_message = "\n\nError inputting command line arguments\nUsage:\n[mode] [number of episodes]\nmode:\n\t-hh - holes and height and column differences\n\t-ho - holes and column differences\n\t-hi - height and column differences\n\t-no - column differences only")    
+            raise Exception( error_message = "\n\nError inputting command line arguments\nUsage:\n[mode] [number of episodes]\nmode:\n\t-hh - holes and height and column differences\n\t-ho - holes and column differences\n\t-hi - height and column differences\n\t-no - column differences only\n\tLoad ANN\nSecond argument should be number of episodes\n third argument should be filepath if file is being loaded.")    
     seed = agent.load_new_seed()
     random.seed(seed)
     tetromino_placement = None
@@ -480,6 +482,7 @@ class Matris(object):
             print("Epsilon: " + str(self.agent.epsilon))
             print("Score: " + str(self.agent.score))
             print("Lines Cleared: " + str(self.agent.lines_cleared))
+            print("Current Episode number: " + str(self.agent.current_episode+1) + " / " + str(self.agent.number_of_episodes))
             print("**********************************")
                      
             
@@ -607,6 +610,10 @@ class Matris(object):
         return board
     
     def serialize_agent(self):
+        """
+        Serializes the agent. 
+        This saves the epsilong value, whether holes or height was used and the current ANN of the agent.
+        """
         agent_information = [self.agent.epsilon, self.agent.holes, self.agent.height, self.agent.current_net]
         handler = open(self.agent.file_path + ".obj", 'wb')
         pickle.dump(agent_information, handler)

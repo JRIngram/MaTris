@@ -7,6 +7,7 @@ import copy, time, random, csv
 from keras.models import Sequential
 from keras.layers import Dense
 import numpy as np
+import pickle
 
 class board():
     """
@@ -190,7 +191,7 @@ class agent():
     previous_state = None
     previous_action = None
     
-    def __init__(self, tetromino=[], episodes=1, random_moves=True, rewards_as_lines=False, epsilon=0.1, discount=0.99,  epsilon_decay=0, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000, height=False, holes=False):
+    def __init__(self, tetromino=[], episodes=1, random_moves=True, rewards_as_lines=False, epsilon=0.1, discount=0.99,  epsilon_decay=0, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000, height=False, holes=False, filepath=None):
         self.agent_tetromino = tetromino
         self.number_of_episodes = episodes
         self.rand = random.Random(self.load_new_seed())
@@ -212,22 +213,32 @@ class agent():
         #Initialize action-value function Q with random weights
         self.current_net = Sequential()
 
-        #If-else statement to determine additional ANN input size.
-        if self.holes == False and self.height == False:
-            #Default of 18 inputs, one for each possible tetromino cell (4 * 2) and one for each column height difference
-            self.current_net.add(Dense(30, input_dim=18, activation='tanh'))
-        elif (self.holes == True and self.height == False) or (self.holes == False and self.height == True):
-            #Default of 18 plus 1 for the extra input of either height or holes.
-            self.current_net.add(Dense(30, input_dim=19, activation='tanh'))
-        elif self.holes == True and self.height == True:
-            #Default of 18 plus 1 for the extra input of either height or holes.
-            self.current_net.add(Dense(30, input_dim=20, activation='tanh'))
-        self.current_net.add(Dense(30, activation='tanh'))
-        #40 outputs, one for each possible action: 10 columns * 4 rotations.
-        self.current_net.add(Dense(40, activation='linear'))
-        self.current_net.compile(loss='mean_squared_error',
-              optimizer='sgd',
-              metrics=['accuracy'])
+        #Whether to create a new ANN or load a previous.
+        if filepath is None:
+            #If-else statement to determine additional ANN input size.
+            if self.holes == False and self.height == False:
+                #Default of 18 inputs, one for each possible tetromino cell (4 * 2) and one for each column height difference
+                self.current_net.add(Dense(30, input_dim=18, activation='tanh'))
+            elif (self.holes == True and self.height == False) or (self.holes == False and self.height == True):
+                #Default of 18 plus 1 for the extra input of either height or holes.
+                self.current_net.add(Dense(30, input_dim=19, activation='tanh'))
+            elif self.holes == True and self.height == True:
+                #Default of 18 plus 1 for the extra input of either height or holes.
+                self.current_net.add(Dense(30, input_dim=20, activation='tanh'))
+            self.current_net.add(Dense(30, activation='tanh'))
+            #40 outputs, one for each possible action: 10 columns * 4 rotations.
+            self.current_net.add(Dense(40, activation='linear'))
+            self.current_net.compile(loss='mean_squared_error',
+                  optimizer='sgd',
+                  metrics=['accuracy'])
+        #Load an agent from an .obj file.
+        else:
+            handler = open(filepath + str(".obj"), 'rb')
+            loaded_agent_information = pickle.load(handler)
+            self.epsilon = loaded_agent_information[0]
+            self.holes = loaded_agent_information[1]
+            self.height = loaded_agent_information[2]
+            self.current_net = loaded_agent_information[3]
         
         #Initialize target action-value function Q
         self.target_net = copy.deepcopy(self.current_net)
