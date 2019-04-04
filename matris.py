@@ -54,15 +54,16 @@ class Matris(object):
         elif (sys.argv[1] == "-lo"):
             agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.01, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000, filepath = sys.argv[3])
         else:
-            raise Exception( error_message = "\n\nError inputting command line arguments\nUsage:\n[mode] [number of episodes]\nmode:\n\t-hh - holes and height and column differences\n\t-ho - holes and column differences\n\t-hi - height and column differences\n\t-no - column differences only\n\tLoad ANN\nSecond argument should be number of episodes\n third argument should be filepath if file is being loaded.")    
+            raise Exception( error_message = "\n\nError inputting command line arguments\nUsage:\n[mode] [number of episodes]\nmode:\n\t-hh - holes and height and column differences\n\t-ho - holes and column differences\n\t-hi - height and column differences\n\t-no - column differences only\n\tLoad ANN\nSecond argument should be number of episodes\n third argument should be filepath if file is being loaded.")
     seed = agent.load_new_seed()
     random.seed(seed)
     tetromino_placement = None
-    
+
     def __init__(self):
+        """
         self.surface = screen.subsurface(Rect((MATRIS_OFFSET+BORDERWIDTH, MATRIS_OFFSET+BORDERWIDTH),
                                               (MATRIX_WIDTH * BLOCKSIZE, (MATRIX_HEIGHT-2) * BLOCKSIZE)))
-
+        """
         self.matrix = dict()
         for y in range(MATRIX_HEIGHT):
             for x in range(MATRIX_WIDTH):
@@ -76,7 +77,7 @@ class Matris(object):
 
         self.next_tetromino = random.choice(list_of_tetrominoes)
         self.set_tetrominoes()
-        
+
         if self.agent_mode == True:
             #Creates a representation of the initial board
             self.board.update_board_representation(self.create_board_representation())
@@ -85,11 +86,11 @@ class Matris(object):
             self.board.set_column_differences()
             print(str(self.board))
             print("Column Height Differences:" + str(self.board.get_column_differences()))
-            
+
             #Set up the the agent
             self.agent.set_current_board(self.board)
             self.agent.set_agent_tetromino(self.current_tetromino)
-        
+
         self.tetromino_rotation = 0
         self.downwards_timer = 0
         self.base_downwards_speed = 0.4 # Move down every 400 ms
@@ -103,7 +104,7 @@ class Matris(object):
         self.lines = 0
 
         self.combo = 1 # Combo will increase when you clear lines with several tetrominos in a row
-        
+
         self.paused = False
 
         self.highscore = load_score()
@@ -113,7 +114,7 @@ class Matris(object):
         self.gameover_sound = get_sound("gameover.wav")
         self.linescleared_sound = get_sound("linecleared.wav")
         self.highscorebeaten_sound = get_sound("highscorebeaten.wav")
-        
+
         if self.agent_mode == True:
             #Agent's first move
             self.tetromino_placement = self.agent.make_move()
@@ -134,7 +135,7 @@ class Matris(object):
         self.tetromino_block = self.block(self.current_tetromino.color)
         self.shadow_block = self.block(self.current_tetromino.color, shadow=True)
 
-    
+
     def hard_drop(self):
         """
         Instantly places tetrominos in the cells below
@@ -153,15 +154,16 @@ class Matris(object):
         """
         try:
             self.needs_redraw = False
-                
+
             if self.agent_mode == True:
                 self.hard_drop()
-                
+
+                """
             else:
                 #Handles player input
                 pressed = lambda key: event.type == pygame.KEYDOWN and event.key == key
                 unpressed = lambda key: event.type == pygame.KEYUP and event.key == key
-                
+
                 events = pygame.event.get()
                 #Controls pausing and quitting the game.
                 for event in events:
@@ -173,10 +175,10 @@ class Matris(object):
                         self.gameover(full_exit=True)
                     elif pressed(pygame.K_ESCAPE):
                         self.gameover()
-            
+
                 if self.paused:
                     return self.needs_redraw
-                    
+
                 for event in events:
                     #Handles player input
                     #Controls movement of the tetromino
@@ -190,42 +192,43 @@ class Matris(object):
                     elif pressed(pygame.K_RIGHT) or pressed(pygame.K_d):
                         self.request_movement('right')
                         self.movement_keys['right'] = 1
-            
+
                     elif unpressed(pygame.K_LEFT) or unpressed(pygame.K_a):
                         self.movement_keys['left'] = 0
                         self.movement_keys_timer = (-self.movement_keys_speed)*2
                     elif unpressed(pygame.K_RIGHT) or unpressed(pygame.K_d):
                         self.movement_keys['right'] = 0
                         self.movement_keys_timer = (-self.movement_keys_speed)*2
-            
-            
-            
-            
+
+
+
+
                     self.downwards_speed = self.base_downwards_speed ** (1 + self.level/10.)
-            
+
                     self.downwards_timer += timepassed
                     downwards_speed = self.downwards_speed*0.10 if any([pygame.key.get_pressed()[pygame.K_DOWN],
                                                                         pygame.key.get_pressed()[pygame.K_s]]) else self.downwards_speed
                     if self.downwards_timer > downwards_speed:
                         if not self.request_movement('down'): #Places tetromino if it cannot move further down
                             self.lock_tetromino()
-            
+
                         self.downwards_timer %= downwards_speed
-            
-            
+
+
                     if any(self.movement_keys.values()):
                         self.movement_keys_timer += timepassed
                     if self.movement_keys_timer > self.movement_keys_speed:
                         self.request_movement('right' if self.movement_keys['right'] else 'left')
                         self.movement_keys_timer %= self.movement_keys_speed
-                    
+                        """
+
         except:
             print("Error in agent running")
             print("Manually causing gameover. Preserves continuation of agent running with minor potential impediment on learning.")
             self.gameover()
             self.needs_redraw = True
         return self.needs_redraw
-        
+
     def draw_surface(self):
         """
         Draws the image of the current tetromino
@@ -237,14 +240,16 @@ class Matris(object):
 
                 #                                       I hide the 2 first rows by drawing them outside of the surface
                 block_location = Rect(x*BLOCKSIZE, (y*BLOCKSIZE - 2*BLOCKSIZE), BLOCKSIZE, BLOCKSIZE)
+                """
                 if with_tetromino[(y,x)] is None:
                     self.surface.fill(BGCOLOR, block_location)
                 else:
                     if with_tetromino[(y,x)][0] == 'shadow':
                         self.surface.fill(BGCOLOR, block_location)
-                    
+
                     self.surface.blit(with_tetromino[(y,x)][1], block_location)
-                    
+                """
+
     def gameover(self, full_exit=False):
         """
         Gameover occurs when a new tetromino does not fit after the old one has died, either
@@ -253,7 +258,7 @@ class Matris(object):
         """
 
         write_score(self.score)
-        
+
         if full_exit:
             if self.agent_mode == True:
                 print("Runs completed.")
@@ -289,7 +294,7 @@ class Matris(object):
                     self.set_tetrominoes()
                     self.next_tetromino = random.choice(list_of_tetrominoes)
                     self.agent.set_agent_tetromino(self.current_tetromino)
-                    
+
                     #Agent's first move of the new game
                     self.tetromino_placement = self.agent.make_move()
                     self.tetromino_position = (0,self.tetromino_placement[2])
@@ -326,7 +331,7 @@ class Matris(object):
                     return False
 
         return position
-                    
+
 
     def request_rotation(self):
         """
@@ -348,12 +353,12 @@ class Matris(object):
         if position and self.blend(shape, position):
             self.tetromino_rotation = rotation
             self.tetromino_position = position
-            
+
             self.needs_redraw = True
             return self.tetromino_rotation
         else:
             return False
-            
+
     def request_movement(self, direction):
         """
         Checks if teteromino can move in the given direction and returns its new position if movement is possible
@@ -413,7 +418,7 @@ class Matris(object):
         boxarr = pygame.PixelArray(box)
         for x in range(len(boxarr)):
             for y in range(len(boxarr)):
-                boxarr[x][y] = tuple(list(map(lambda c: min(255, int(c*random.uniform(0.8, 1.2))), colors[color])) + end) 
+                boxarr[x][y] = tuple(list(map(lambda c: min(255, int(c*random.uniform(0.8, 1.2))), colors[color])) + end)
 
         del boxarr # deleting boxarr or else the box surface will be 'locked' or something like that and won't blit.
         border.blit(box, Rect(borderwidth, borderwidth, 0, 0))
@@ -429,13 +434,13 @@ class Matris(object):
         self.matrix = self.blend()
 
         lines_cleared = self.remove_lines()
-        
+
         if lines_cleared == -1: #Indicates that clearing the lines failed. This is due to the tetromino reaching higher than 2 above the skyline.
             """
             End episode:
                 game will be in a terminal state as the skyline was occupied 3 cells high
                 however MaTris can only handle the skyline being occupied by 2 cells high.
-            
+
             This causes the memory to be stored as if it were a terminal state.
             The board is then cleared, and a new episode restarted.
             """
@@ -443,16 +448,16 @@ class Matris(object):
             self.agent.update_approximater()
             self.agent.reset_approximaters()
             self.gameover()
-        
-        else: 
+
+        else:
             self.lines += lines_cleared
-    
+
             if lines_cleared:
                 self.score += 100 * (lines_cleared**2) * self.combo
-    
+
                 if not self.played_highscorebeaten_sound and self.score > self.highscore:
                     self.played_highscorebeaten_sound = True
-    
+
             if self.lines >= self.level*10:
                 self.level += 1
 
@@ -462,10 +467,10 @@ class Matris(object):
 
         if not self.blend() and lines_cleared != -1:
             self.gameover()
-        
+
         self.needs_redraw = True
-        
-        if self.agent_mode == True:          
+
+        if self.agent_mode == True:
             #Collects information from the board.
             self.board.update_board_representation(self.create_board_representation())
             self.board.set_board_height()
@@ -486,12 +491,12 @@ class Matris(object):
             print("Lines Cleared: " + str(self.agent.lines_cleared))
             print("Current Episode number: " + str(self.agent.current_episode+1) + " / " + str(self.agent.number_of_episodes))
             print("**********************************")
-                     
-            
+
+
             #Passes tetromino and board information to the agent.
             self.agent.set_agent_tetromino(self.current_tetromino)
             self.agent.set_current_board(self.board)
-            
+
             #Remembers previous S,A,R,S
 
             reward = self.agent.update_score_and_lines(self.score, self.lines)
@@ -504,8 +509,8 @@ class Matris(object):
                 self.gameover()
             else:   #Continue episode as not in terminal state
                 self.tetromino_placement = self.agent.make_move()
-                
-                if self.tetromino_placement == False: 
+
+                if self.tetromino_placement == False:
                     #Tetromino placed in state that causes a game over
                     if self.agent.random_moves == False:
                         #Tetromino placed in state that causes a game over
@@ -522,7 +527,7 @@ class Matris(object):
                     self.tetromino_position = (0,self.tetromino_placement[2])
                     for rotations in range(self.tetromino_placement[0]):
                         self.request_rotation()
-    
+
     def remove_lines(self):
         """
         Removes lines from the board
@@ -537,7 +542,7 @@ class Matris(object):
                         line[1].append(x)
                 if len(line[1]) == MATRIX_WIDTH:
                     lines.append(y)
-    
+
             for line in sorted(lines):
                 #Moves lines down one row
                 for x in range(MATRIX_WIDTH):
@@ -545,7 +550,7 @@ class Matris(object):
                 for y in range(0, line+1)[::-1]:
                     for x in range(MATRIX_WIDTH):
                         self.matrix[(y,x)] = self.matrix.get((y-1,x), None)
-            
+
             return len(lines)
         except:
             print("ERROR REMOVING LINES:\t DEBUG INFORMATION")
@@ -557,7 +562,7 @@ class Matris(object):
         """
         Does `shape` at `position` fit in `matrix`? If so, return a new copy of `matrix` where all
         the squares of `shape` have been placed in `matrix`. Otherwise, return False.
-            
+
         This method is often used simply as a test, for example to see if an action by the player is valid.
         It is also used in `self.draw_surface` to paint the falling tetromino and its shadow on the screen.
         """
@@ -565,7 +570,7 @@ class Matris(object):
             shape = self.rotated()
         if position is None:
             position = self.tetromino_position
-        
+
         copy = dict(self.matrix if matrix is None else matrix)
         posY, posX = position
         for x in range(posX, posX+len(shape)):
@@ -573,12 +578,12 @@ class Matris(object):
                 if (copy.get((y, x), False) is False and shape[y-posY][x-posX] # shape is outside the matrix
                     or # coordinate is occupied by something else which isn't a shadow
                     copy.get((y,x)) and shape[y-posY][x-posX] and copy[(y,x)][0] != 'shadow'):
-        
+
                     return False # Blend failed; `shape` at `position` breaks the matrix
-        
+
                 elif shape[y-posY][x-posX]:
                     copy[(y,x)] = ('shadow', self.shadow_block) if shadow else ('block', self.tetromino_block)
-    
+
         return copy
 
     def construct_surface_of_next_tetromino(self):
@@ -593,7 +598,7 @@ class Matris(object):
                 if shape[y][x]:
                     surf.blit(self.block(self.next_tetromino.color), (x*BLOCKSIZE, y*BLOCKSIZE))
         return surf
-    
+
     def create_board_representation(self):
         lines = []
         for y in range(MATRIX_HEIGHT):
@@ -608,12 +613,12 @@ class Matris(object):
         board = []
         for i in range (len(lines)):
             board.append(lines[i])
-        
+
         return board
-    
+
     def serialize_agent(self):
         """
-        Serializes the agent. 
+        Serializes the agent.
         This saves the epsilong value, whether holes or height was used and the current ANN of the agent.
         """
         agent_information = [self.agent.epsilon, self.agent.holes, self.agent.height, self.agent.current_net]
@@ -629,13 +634,13 @@ class Game(object):
         """
         clock = pygame.time.Clock()
         self.matris = Matris()
-        
-        screen.blit(construct_nightmare(screen.get_size()), (0,0))
-        
+
+        #screen.blit(construct_nightmare(screen.get_size()), (0,0))
+
         matris_border = Surface((MATRIX_WIDTH*BLOCKSIZE+BORDERWIDTH*2, VISIBLE_MATRIX_HEIGHT*BLOCKSIZE+BORDERWIDTH*2))
         matris_border.fill(BORDERCOLOR)
-        screen.blit(matris_border, (MATRIS_OFFSET,MATRIS_OFFSET))
-        
+        #screen.blit(matris_border, (MATRIS_OFFSET,MATRIS_OFFSET))
+
         self.redraw()
 
         while True:
@@ -651,7 +656,7 @@ class Game(object):
                         self.matris.gameover()
             except GameOver:
                 return
-      
+
 
     def redraw(self):
         """
@@ -663,7 +668,7 @@ class Game(object):
 
             self.matris.draw_surface()
 
-        pygame.display.flip()
+        #pygame.display.flip()
 
 
     def blit_info(self):
@@ -683,30 +688,30 @@ class Game(object):
             surf.blit(text, text.get_rect(top=BORDERWIDTH+10, left=BORDERWIDTH+10))
             surf.blit(val, val.get_rect(top=BORDERWIDTH+10, right=width-(BORDERWIDTH+10)))
             return surf
-        
+
         #Resizes side panel to allow for all information to be display there.
         scoresurf = renderpair("Score", self.matris.score)
         levelsurf = renderpair("Level", self.matris.level)
         linessurf = renderpair("Lines", self.matris.lines)
         combosurf = renderpair("Combo", "x{}".format(self.matris.combo))
 
-        height = 20 + (levelsurf.get_rect().height + 
+        height = 20 + (levelsurf.get_rect().height +
                        scoresurf.get_rect().height +
-                       linessurf.get_rect().height + 
+                       linessurf.get_rect().height +
                        combosurf.get_rect().height )
-        
+
         #Colours side panel
         area = Surface((width, height))
         area.fill(BORDERCOLOR)
         area.fill(BGCOLOR, Rect(BORDERWIDTH, BORDERWIDTH, width-BORDERWIDTH*2, height-BORDERWIDTH*2))
-        
+
         #Draws side panel
         area.blit(levelsurf, (0,0))
         area.blit(scoresurf, (0, levelsurf.get_rect().height))
         area.blit(linessurf, (0, levelsurf.get_rect().height + scoresurf.get_rect().height))
         area.blit(combosurf, (0, levelsurf.get_rect().height + scoresurf.get_rect().height + linessurf.get_rect().height))
 
-        screen.blit(area, area.get_rect(bottom=HEIGHT-MATRIS_OFFSET, centerx=TRICKY_CENTERX))
+        #screen.blit(area, area.get_rect(bottom=HEIGHT-MATRIS_OFFSET, centerx=TRICKY_CENTERX))
 
 
     def blit_next_tetromino(self, tetromino_surf):
@@ -724,7 +729,7 @@ class Game(object):
         center = areasize/2 - tetromino_surf_size/2
         area.blit(tetromino_surf, (center, center))
 
-        screen.blit(area, area.get_rect(top=MATRIS_OFFSET, centerx=TRICKY_CENTERX))
+        #screen.blit(area, area.get_rect(top=MATRIS_OFFSET, centerx=TRICKY_CENTERX))
 
 class Menu(object):
     """
@@ -733,7 +738,7 @@ class Menu(object):
     running = True
     def main(self, screen):
         clock = pygame.time.Clock()
-        
+        """
         menu = kezmenu.KezMenu(
             ['Play!', lambda: Game().main(screen)],
             ['Quit', lambda: setattr(self, 'running', False)],
@@ -742,13 +747,16 @@ class Menu(object):
         menu.enableEffect('enlarge-font-on-focus', font=None, size=60, enlarge_factor=1.2, enlarge_time=0.3)
         menu.color = (255,255,255)
         menu.focus_color = (40, 200, 40)
-        
+
         nightmare = construct_nightmare(screen.get_size())
         highscoresurf = self.construct_highscoresurf() #Loads highscore onto menu
 
         timepassed = clock.tick(30) / 1000.
-        
+        """
+
         Game().main(screen)
+
+        """
         while self.running:
             events = pygame.event.get()
 
@@ -760,14 +768,15 @@ class Menu(object):
 
             timepassed = clock.tick(30) / 1000.
 
-            if timepassed > 1: # A game has most likely been played 
+            if timepassed > 1: # A game has most likely been played
                 highscoresurf = self.construct_highscoresurf()
 
             screen.blit(nightmare, (0,0))
             screen.blit(highscoresurf, highscoresurf.get_rect(right=WIDTH-50, bottom=HEIGHT-50))
             menu.draw(screen)
             pygame.display.flip()
-        
+        """
+
 
     def construct_highscoresurf(self):
         """
@@ -804,6 +813,6 @@ def construct_nightmare(size):
 if __name__ == '__main__':
     pygame.init()
 
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption("MaTris")
+    screen = None
+    #pygame.display.set_caption("MaTris")
     Menu().main(screen)

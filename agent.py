@@ -751,6 +751,8 @@ class agent():
         This stores the additional information of whether or not a state was terminal.
         
         """
+        if reward != 0 and reward != -100:
+            foo="bar"
         self.event_memory.append([previous_state, previous_action, reward, copy.deepcopy(new_board), terminal_state])
         if len(self.event_memory) > self.memory_size:
             self.event_memory.pop(0)
