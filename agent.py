@@ -77,6 +77,21 @@ class board():
         Returns the board height.
         """
         return self.board_height
+    
+    def get_height_difference_punishment(self):
+        top = self.board_height
+        column_heights = [];
+        for x in range(len(self.board_representation[0])): #Number of columns
+            for y in range (len(self.board_representation)): #Number of rows
+                if(self.board_representation[y][x] == 1):
+                    column_heights.append(22 - y) #Matris height is 22
+                    break
+                elif(y == 21): #Column is empty
+                    column_heights.append(0)
+        bottom = min(column_heights)
+        punishment = top - bottom
+        return punishment  
+        
 
     def get_cum_height(self):   
         """
@@ -217,8 +232,8 @@ class agent():
         if filepath is None:
             #If-else statement to determine additional ANN input size.
             if self.holes == False and self.height == False:
-                #Default of 18 inputs, one for each possible tetromino cell (4 * 2) and one for each column height difference
-                self.current_net.add(Dense(30, input_dim=18, activation='tanh'))
+                #one input for each column height difference
+                self.current_net.add(Dense(30, input_dim=10, activation='tanh'))
             elif (self.holes == True and self.height == False) or (self.holes == False and self.height == True):
                 #Default of 18 plus 1 for the extra input of either height or holes.
                 self.current_net.add(Dense(30, input_dim=19, activation='tanh'))
@@ -245,7 +260,9 @@ class agent():
         
         #Create a csv file to store results
         #Create file path depending on mode
-        if self.holes == False and self.height == False:
+        if self.random_moves == True:
+            self.file_path = "results/RA-results-" + str(time.strftime("%d-%m-%y_%H:%M:%S"))
+        elif self.holes == False and self.height == False:
             self.file_path = "results/NO-results-" + str(time.strftime("%d-%m-%y_%H:%M:%S"))
         elif self.holes == True and self.height == False:
             self.file_path = "results/HO-results-" + str(time.strftime("%d-%m-%y_%H:%M:%S"))
@@ -408,8 +425,6 @@ class agent():
             possible_actions = self.find_valid_placements()
             if self.holes == False and self.height == False:
                 state = np.array([[#Tetromino being used
-                    tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
-                    tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
                     #Current state of the board (differences in column height)
                     self.current_board.column_differences[0],self.current_board.column_differences[1],
                     self.current_board.column_differences[2],self.current_board.column_differences[3],
@@ -583,7 +598,6 @@ class agent():
             for y in range(len(agent_tetromino[rotation][0])):
                 if agent_tetromino[rotation][x][y] == 1:
                     full_columns[y] = 1
-            #TODO Add break once full_columns is full?
         return full_columns
             
     def calculate_tetromino_height(self, agent_tetromino, rotation):
@@ -597,7 +611,6 @@ class agent():
             for y in range(len(agent_tetromino[rotation][0])):
                 if agent_tetromino[rotation][y][x] == 1:
                     full_rows[y] = 1
-            #TODO Add break once full_rows is full?
         return full_rows
     
     def get_current_episode(self):
@@ -738,7 +751,13 @@ class agent():
         if self.rewards_as_lines == True:
             self.update_score(score)
             reward = self.set_lines_cleared(lines_cleared)
-            return reward ** 2
+            if reward == 0:
+                punishment = self.current_board.get_height_difference_punishment()
+                reward = (reward ** 2) - punishment
+            else:
+                reward = (reward ** 2) 
+            print("Reward: " + str(reward))
+            return reward
         else:
             reward = self.update_score(score)
             self.set_lines_cleared(lines_cleared)
@@ -751,8 +770,6 @@ class agent():
         This stores the additional information of whether or not a state was terminal.
         
         """
-        if reward != 0 and reward != -100:
-            foo="bar"
         self.event_memory.append([previous_state, previous_action, reward, copy.deepcopy(new_board), terminal_state])
         if len(self.event_memory) > self.memory_size:
             self.event_memory.pop(0)
@@ -803,8 +820,6 @@ class agent():
                     if self.holes == False and self.height == False:
                         next_state_inputs = np.array([[
                             #Tetromino being used
-                            tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
-                            tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
                             #State of next board (differences in column height)
                             column_differences[0],column_differences[1],
                             column_differences[2],column_differences[3],
@@ -938,9 +953,6 @@ class agent():
         previous_column_diffs = copy.deepcopy(self.current_board.column_differences)
         if self.holes == False and self.height == False:
             previous_state = [#Tetromino being used
-                tetromino_input[0][0],tetromino_input[0][1],
-                tetromino_input[0][2],tetromino_input[0][3],
-                tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
                 previous_column_diffs[0],previous_column_diffs[1],
                 previous_column_diffs[2],previous_column_diffs[3],
                 previous_column_diffs[4],previous_column_diffs[5],

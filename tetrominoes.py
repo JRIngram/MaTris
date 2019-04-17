@@ -6,10 +6,41 @@ Tetromino = namedtuple("Tetrimino", "name color shape")
 
 #Creates the list of tetrominos for use in the game
 list_of_tetrominoes = [
+    Tetromino(name="long",
+              color="blue",
+              shape=((O,O,O,O),
+                     (X,X,X,X),
+                     (O,O,O,O),
+                     (O,O,O,O))),
     Tetromino(name="square",
               color="yellow",
               shape=((X,X),
-                     (X,X)))
+                     (X,X))),
+    Tetromino(name="hat",
+              color="pink",
+              shape=((O,X,O),
+                     (X,X,X),
+                     (O,O,O))),
+    Tetromino(name="right_snake",
+              color="green",
+              shape=((O,X,X),
+                     (X,X,O),
+                     (O,O,O))),
+    Tetromino(name="left_snake",
+              color="red",
+              shape=((X,X,O),
+                     (O,X,X),
+                     (O,O,O))),
+    Tetromino(name="left_gun",
+              color="cyan",
+              shape=((X,O,O),
+                     (X,X,X),
+                     (O,O,O))),
+    Tetromino(name="right_gun",
+              color="orange",
+              shape=((O,O,X),
+                     (X,X,X),
+                     (O,O,O)))
     ]
 
 def rotate(shape, times=1):

@@ -51,8 +51,12 @@ class Matris(object):
             agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.01, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000, height=True)
         elif (sys.argv[1] == "-no"):
             agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.01, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000)
+        elif (sys.argv[1] == "-ra"):
+            agent = agent.agent([],int(sys.argv[2]), random_moves = True)
         elif (sys.argv[1] == "-lo"):
             agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.01, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000, filepath = sys.argv[3])
+
+            
         else:
             raise Exception( error_message = "\n\nError inputting command line arguments\nUsage:\n[mode] [number of episodes]\nmode:\n\t-hh - holes and height and column differences\n\t-ho - holes and column differences\n\t-hi - height and column differences\n\t-no - column differences only\n\tLoad ANN\nSecond argument should be number of episodes\n third argument should be filepath if file is being loaded.")
     seed = agent.load_new_seed()
@@ -487,6 +491,7 @@ class Matris(object):
             for line in range(0,len(self.agent.agent_tetromino[0])):
                 print(str(self.agent.agent_tetromino[0][line]))
             print("Epsilon: " + str(self.agent.epsilon))
+            reward = self.agent.update_score_and_lines(self.score, self.lines)
             print("Score: " + str(self.agent.score))
             print("Lines Cleared: " + str(self.agent.lines_cleared))
             print("Current Episode number: " + str(self.agent.current_episode+1) + " / " + str(self.agent.number_of_episodes))
@@ -499,7 +504,7 @@ class Matris(object):
 
             #Remembers previous S,A,R,S
 
-            reward = self.agent.update_score_and_lines(self.score, self.lines)
+            #reward = self.agent.update_score_and_lines(self.score, self.lines)
             if self.agent.check_game_over() and lines_cleared != -1:  #Ends episode if previous turn was terminal
                 #End of episode
                 if self.agent.random_moves == False:
