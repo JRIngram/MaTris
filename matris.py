@@ -624,7 +624,7 @@ class Matris(object):
     def serialize_agent(self):
         """
         Serializes the agent.
-        This saves the epsilong value, whether holes or height was used and the current ANN of the agent.
+        This saves the epsilon value, whether holes or height was used and the current ANN of the agent.
         """
         agent_information = [self.agent.epsilon, self.agent.holes, self.agent.height, self.agent.current_net]
         handler = open(self.agent.file_path + ".obj", 'wb')
