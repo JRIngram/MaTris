@@ -59,9 +59,10 @@ class Matris(object):
             #Creates an agent that plays randomly
             agent = agent.agent([],int(sys.argv[2]), random_moves = True)
         elif (sys.argv[1] == "-lo"):
-            #Loads an agent that has previously been trained in MaTris (
+            #Loads an agent that has previously been trained in MaTris. Loads .obj file.
             agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.01, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000, filepath = sys.argv[3])
         elif (sys.argv[1] == "-lt"):
+            #Loads an agent that has previously been trained using supervised learning in MaTris-O. Loads .obj file.
             agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.01, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000, filepath = sys.argv[3], supervised=True)
 
             

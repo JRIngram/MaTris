@@ -250,8 +250,8 @@ class agent():
             self.current_net.compile(loss='mean_squared_error',
                   optimizer='sgd',
                   metrics=['accuracy'])
-        #Loads an agent from an .obj file.
         else:
+            #Loads an agent from an .obj file.
             handler = open(filepath + str(".obj"), 'rb')
             loaded_agent_information = pickle.load(handler)
             self.epsilon = loaded_agent_information[0]
@@ -262,8 +262,7 @@ class agent():
         #Initialize target action-value function Q
         self.target_net = copy.deepcopy(self.current_net)
         
-        #Create a csv file to store results
-        #Create file path depending on mode
+        #Create a csv file to store results with file path depending on mode
         if self.random_moves == True:
             self.file_path = "results/RA-results-" + str(time.strftime("%d-%m-%y_%H:%M:%S"))
         elif self.holes == False and self.height == False:
@@ -275,6 +274,7 @@ class agent():
         elif self.holes == True and self.height == True:
             self.file_path = "results/HH-results-" + str(time.strftime("%d-%m-%y_%H:%M:%S"))
         else:
+            #Generic filepath
             self.file_path = "results/results-" + str(time.strftime("%d-%m-%y_%H:%M:%S"))
         with open(self.file_path + str(".csv"), 'w+') as results_file:
             results_file.write("episode,results" + "\n")
@@ -375,6 +375,7 @@ class agent():
             if len(possible_placements[x]) > 0:
                 rotations_with_remaining_placements.append(x)
         if len(rotations_with_remaining_placements) == 0:
+            #Ends game if no valid placements remain.
             print("Game Over: No rotations with remaining placements.")
             return True
         
@@ -391,14 +392,13 @@ class agent():
         for x in range(4):
             if len(possible_placements[x]) > 0:
                 rotations_with_remaining_placements.append(x)
-                #print("Valid placements: " + str(x) + ":" + str(len(possible_placements[x])))
         rotation = rotations_with_remaining_placements[random.randint(0, len(rotations_with_remaining_placements) - 1)]         
         number_of_placements = len(possible_placements[rotation])-1
         while number_of_placements < 0:
             rotation = rotations_with_remaining_placements[random.randint(0, len(rotations_with_remaining_placements) - 1)]         
             number_of_placements = len(possible_placements[rotation])-1
-            #return False
         placement_option = random.randint(0,number_of_placements)
+        
         #rotation,height,column
         placement = [rotation,possible_placements[rotation][placement_option][0][2],possible_placements[rotation][placement_option][0][1]]
         
@@ -427,6 +427,7 @@ class agent():
         tetromino_input = self.tetromino_to_input(self.agent_tetromino[0])
         if choose_optimal > self.epsilon:
             possible_actions = self.find_valid_placements()
+            #Format inputs for ANN.
             if self.holes == False and self.height == False:
                 if self.supervised == False:
                     state = np.array([[#Tetromino being used
@@ -440,6 +441,7 @@ class agent():
                         self.current_board.column_differences[8],self.current_board.column_differences[9],                      
                         ]])
                 else:
+                    #If trained via supervised learning, tetromino not used as input
                     state = np.array([[
                         #Current state of the board (differences in column height)
                         self.current_board.column_differences[0],self.current_board.column_differences[1],
@@ -489,8 +491,6 @@ class agent():
 
             predicted_values = self.query(state)
             optimal_placement = None
-                        #rotation                #height                    #column - left trimmed
-            #placement = [optimal_placement[0][0], optimal_placement[0][2], optimal_placement[0][1] - - optimal_placement[0][3]]
             #Choose optimal move
             for rotation in range(0,len(possible_actions)): 
                 for option in range(0,len(possible_actions[rotation])):
@@ -502,7 +502,7 @@ class agent():
                             optimal_placement = [possible_actions[rotation][option][0], node_value]
                         elif node_value > optimal_placement[1]:
                             optimal_placement = [possible_actions[rotation][option][0], node_value]
-            #rotation,height,column (corrected by trim)
+                            #rotation                #height                    #column - left trimmed
             placement = [optimal_placement[0][0], optimal_placement[0][2], optimal_placement[0][1] - optimal_placement[0][3]]
             
             #Checks if top two columns are filled by the chosen placement
@@ -672,7 +672,7 @@ class agent():
     def load_new_seed(self):
         """
         Loads the seed for the corresponding episode
-        Takes the seed from seeds.csv which may be generated by the generate_seeds module
+        Takes the seed from seeds.csv which may be generated by the generate_seeds.py module
         """
         with open('seeds.csv', 'r') as seed_csv:
             seed_reader = csv.reader(seed_csv, delimiter=',', quotechar='|')
@@ -834,8 +834,7 @@ class agent():
                         tetromino = self.convert_tetromino(tetromino_shape)
                         #Loads a standard 4*2 tetromino input
                         tetromino_input = self.tetromino_to_input(tetromino)
-                        
-                                            
+                                           
                         if self.holes == False and self.height == False:
                             next_state_inputs = np.array([[
                                 #Tetromino being used
@@ -889,7 +888,6 @@ class agent():
                                 holes, height    
                             ]])
     
-                        
                         #Stores the 4 possible rotations for the tetromino
                         tetromino_rotations = []
                         tetromino_rotations.append(tetromino)

@@ -23,7 +23,7 @@ Coveted by academia
 In 2013, my game [was used](http://eprints.ucm.es/22631/1/REMIRTA.pdf) by someone in Madrid to test "remote execution of multimedia interactive real-time applications". The next year, [a study in Denmark](https://www.academia.edu/6262472/Improving_game_experience_using_dynamic_difficulty_adjustment_based_on_physiological_signals) called "Improving game experience using dynamic diﬃculty adjustment" asked participants to "self-rate their valence and arousal [sic]" playing MaTris! Who would've thunk it? In 2016, people in Stanford [were using the game](http://cs231n.stanford.edu/reports/2016/pdfs/121_Report.pdf) to try out deep reinforcement learning, although apparently the result was not as "respectable" as it could've been. Not a problem in Korea, apparently, where students [are expected](http://nlp.chonbuk.ac.kr/AML/AML_assignment_2.pdf) to accomplish it! That stuff is way above my head, but perhaps my life will be spared during the singularity?
 
 # Artificial Intelligence Extension
-An artificial intelligence mode is currently being created. This mode is ran by default. To return to a manual game play mode, `agent_mode` in the class `Matris` in `matris.py` needs to be set to `False`.
+An artificial intelligence mode has been created. This mode is ran by default. To return to a manual game play mode, `agent_mode` in the class `Matris` in `matris.py` needs to be set to `False`.
 
 The logic of this mostly resides in `agent.py` although modifcations have been made to `matris.py` to allow for the agent to interact with the game.
 
