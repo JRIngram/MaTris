@@ -44,17 +44,25 @@ class Matris(object):
     agent_mode = True #used to check if agent is playing. Causes hard-drops to always happen.
     if agent_mode == True:
         if (sys.argv[1] == "-hh"):
+            #Creates an agent that takes column differences, holes and height of the tallest columnas inputs
             agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.01, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000, height=True, holes=True)
         elif (sys.argv[1] == "-ho"):
+            #Creates an agent that takes column differences and holes as inputs
             agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.01, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000, holes=True)
         elif (sys.argv[1] == "-hi"):
+            #Creates an agent that takes column differences and height of the tallest column as inputs
             agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.01, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000, height=True)
         elif (sys.argv[1] == "-no"):
+            #Creates an agent that takes column differences as inputs only
             agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.01, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000)
         elif (sys.argv[1] == "-ra"):
+            #Creates an agent that plays randomly
             agent = agent.agent([],int(sys.argv[2]), random_moves = True)
         elif (sys.argv[1] == "-lo"):
+            #Loads an agent that has previously been trained in MaTris (
             agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.01, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000, filepath = sys.argv[3])
+        elif (sys.argv[1] == "-lt"):
+            agent = agent.agent([],int(sys.argv[2]), random_moves = False, rewards_as_lines=True, epsilon=1, epsilon_decay=0.01, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000, filepath = sys.argv[3], supervised=True)
 
             
         else:
@@ -158,16 +166,15 @@ class Matris(object):
         """
         try:
             self.needs_redraw = False
-
+    
             if self.agent_mode == True:
                 self.hard_drop()
-
-                """
+    
             else:
                 #Handles player input
                 pressed = lambda key: event.type == pygame.KEYDOWN and event.key == key
                 unpressed = lambda key: event.type == pygame.KEYUP and event.key == key
-
+    
                 events = pygame.event.get()
                 #Controls pausing and quitting the game.
                 for event in events:
@@ -179,10 +186,10 @@ class Matris(object):
                         self.gameover(full_exit=True)
                     elif pressed(pygame.K_ESCAPE):
                         self.gameover()
-
+    
                 if self.paused:
                     return self.needs_redraw
-
+    
                 for event in events:
                     #Handles player input
                     #Controls movement of the tetromino
@@ -196,35 +203,34 @@ class Matris(object):
                     elif pressed(pygame.K_RIGHT) or pressed(pygame.K_d):
                         self.request_movement('right')
                         self.movement_keys['right'] = 1
-
+    
                     elif unpressed(pygame.K_LEFT) or unpressed(pygame.K_a):
                         self.movement_keys['left'] = 0
                         self.movement_keys_timer = (-self.movement_keys_speed)*2
                     elif unpressed(pygame.K_RIGHT) or unpressed(pygame.K_d):
                         self.movement_keys['right'] = 0
                         self.movement_keys_timer = (-self.movement_keys_speed)*2
-
-
-
-
+    
+    
+    
+    
                     self.downwards_speed = self.base_downwards_speed ** (1 + self.level/10.)
-
+    
                     self.downwards_timer += timepassed
                     downwards_speed = self.downwards_speed*0.10 if any([pygame.key.get_pressed()[pygame.K_DOWN],
-                                                                        pygame.key.get_pressed()[pygame.K_s]]) else self.downwards_speed
+                                                                            pygame.key.get_pressed()[pygame.K_s]]) else self.downwards_speed
                     if self.downwards_timer > downwards_speed:
                         if not self.request_movement('down'): #Places tetromino if it cannot move further down
                             self.lock_tetromino()
-
+    
                         self.downwards_timer %= downwards_speed
-
-
+    
+    
                     if any(self.movement_keys.values()):
                         self.movement_keys_timer += timepassed
                     if self.movement_keys_timer > self.movement_keys_speed:
                         self.request_movement('right' if self.movement_keys['right'] else 'left')
                         self.movement_keys_timer %= self.movement_keys_speed
-                        """
 
         except:
             print("Error in agent running")

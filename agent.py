@@ -206,12 +206,16 @@ class agent():
     previous_state = None
     previous_action = None
     
-    def __init__(self, tetromino=[], episodes=1, random_moves=True, rewards_as_lines=False, epsilon=0.1, discount=0.99,  epsilon_decay=0, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000, height=False, holes=False, filepath=None):
+    #Used to mark if the agent is the 10 output ANN
+    supervised = False
+    
+    def __init__(self, tetromino=[], episodes=1, random_moves=True, rewards_as_lines=False, epsilon=0.1, discount=0.99,  epsilon_decay=0, epsilon_minimum=0.01, memory_size=1000, sample_size=32, reset_steps=1000, height=False, holes=False, filepath=None, supervised=False):
         self.agent_tetromino = tetromino
         self.number_of_episodes = episodes
         self.rand = random.Random(self.load_new_seed())
         self.random_moves = random_moves
         self.rewards_as_lines = rewards_as_lines
+        self.supervised = supervised
         
         self.epsilon = epsilon
         self.epsilon_decay = epsilon_decay
@@ -233,7 +237,7 @@ class agent():
             #If-else statement to determine additional ANN input size.
             if self.holes == False and self.height == False:
                 #one input for each column height difference
-                self.current_net.add(Dense(30, input_dim=10, activation='tanh'))
+                self.current_net.add(Dense(30, input_dim=18, activation='tanh'))
             elif (self.holes == True and self.height == False) or (self.holes == False and self.height == True):
                 #Default of 18 plus 1 for the extra input of either height or holes.
                 self.current_net.add(Dense(30, input_dim=19, activation='tanh'))
@@ -246,7 +250,7 @@ class agent():
             self.current_net.compile(loss='mean_squared_error',
                   optimizer='sgd',
                   metrics=['accuracy'])
-        #Load an agent from an .obj file.
+        #Loads an agent from an .obj file.
         else:
             handler = open(filepath + str(".obj"), 'rb')
             loaded_agent_information = pickle.load(handler)
@@ -424,14 +428,27 @@ class agent():
         if choose_optimal > self.epsilon:
             possible_actions = self.find_valid_placements()
             if self.holes == False and self.height == False:
-                state = np.array([[#Tetromino being used
-                    #Current state of the board (differences in column height)
-                    self.current_board.column_differences[0],self.current_board.column_differences[1],
-                    self.current_board.column_differences[2],self.current_board.column_differences[3],
-                    self.current_board.column_differences[4],self.current_board.column_differences[5],
-                    self.current_board.column_differences[6],self.current_board.column_differences[7],
-                    self.current_board.column_differences[8],self.current_board.column_differences[9],                      
+                if self.supervised == False:
+                    state = np.array([[#Tetromino being used
+                        tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
+                        tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
+                        #Current state of the board (differences in column height)
+                        self.current_board.column_differences[0],self.current_board.column_differences[1],
+                        self.current_board.column_differences[2],self.current_board.column_differences[3],
+                        self.current_board.column_differences[4],self.current_board.column_differences[5],
+                        self.current_board.column_differences[6],self.current_board.column_differences[7],
+                        self.current_board.column_differences[8],self.current_board.column_differences[9],                      
+                        ]])
+                else:
+                    state = np.array([[
+                        #Current state of the board (differences in column height)
+                        self.current_board.column_differences[0],self.current_board.column_differences[1],
+                        self.current_board.column_differences[2],self.current_board.column_differences[3],
+                        self.current_board.column_differences[4],self.current_board.column_differences[5],
+                        self.current_board.column_differences[6],self.current_board.column_differences[7],
+                        self.current_board.column_differences[8],self.current_board.column_differences[9],                      
                     ]])
+                    
             elif (self.holes == True and self.height == False):
                 state = np.array([[#Tetromino being used
                     tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
@@ -478,12 +495,13 @@ class agent():
             for rotation in range(0,len(possible_actions)): 
                 for option in range(0,len(possible_actions[rotation])):
                     #For each option for each rotation check the value
-                    output_node = (rotation*10) + option #output node to retrieve the predicted value from.
-                    node_value = predicted_values[0][output_node]
-                    if optimal_placement == None:
-                        optimal_placement = [possible_actions[rotation][option][0], node_value]
-                    elif node_value > optimal_placement[1]:
-                        optimal_placement = [possible_actions[rotation][option][0], node_value]
+                    if self.supervised == False or (self.supervised == True and rotation == 0):
+                        output_node = (rotation*10) + option #output node to retrieve the predicted value from.
+                        node_value = predicted_values[0][output_node]
+                        if optimal_placement == None:
+                            optimal_placement = [possible_actions[rotation][option][0], node_value]
+                        elif node_value > optimal_placement[1]:
+                            optimal_placement = [possible_actions[rotation][option][0], node_value]
             #rotation,height,column (corrected by trim)
             placement = [optimal_placement[0][0], optimal_placement[0][2], optimal_placement[0][1] - optimal_placement[0][3]]
             
@@ -782,150 +800,153 @@ class agent():
             Max predicted reward from next state (if non-terminal state)
         Gradient descent is then performed on the current_net
         """
-        if len(self.event_memory) < self.sample_size:
-            memory_samples = random.sample(self.event_memory, len(self.event_memory))
-        else:
-            memory_samples = random.sample(self.event_memory, self.sample_size)
-            
-        for memory in memory_samples:
-            previous_state = memory[0]
-            action = memory[1]
-            reward = memory[2]
-            next_state = memory[3]
-            terminal_state = memory[4]
-            
-            if terminal_state == True:
-                #Terminal state, so target is just the received reward / punishment
-                target = np.array([reward])
+        if self.supervised == False:
+            if len(self.event_memory) < self.sample_size:
+                memory_samples = random.sample(self.event_memory, len(self.event_memory))
             else:
-                """
-                From the next_state:
-                For each possible next tetromino
-                    Calculate the next possible actions
-                    Choose the Maximum Possible Reward
-                Pick the Maximum from the maximums, set to SAMAX
-                Perform: target = Reward + (GAMMA * SAMAX)
-                """
-                column_differences = next_state.column_differences
-                holes = next_state.get_holes()
-                height = next_state.get_board_height()
-                maximum_values = []
-                tetrominos = list_of_tetrominoes
-                for tetromino_shape in tetrominos:
-                    tetromino = self.convert_tetromino(tetromino_shape)
-                    #Loads a standard 4*2 tetromino input
-                    tetromino_input = self.tetromino_to_input(tetromino)
-                    
-                                        
-                    if self.holes == False and self.height == False:
-                        next_state_inputs = np.array([[
-                            #Tetromino being used
-                            #State of next board (differences in column height)
-                            column_differences[0],column_differences[1],
-                            column_differences[2],column_differences[3],
-                            column_differences[4],column_differences[5],
-                            column_differences[6],column_differences[7],
-                            column_differences[8],column_differences[9],                        
-                        ]])
-                    elif (self.holes == True and self.height == False):
-                        next_state_inputs = np.array([[
-                            #Tetromino being used
-                            tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
-                            tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
-                            #State of next board (differences in column height and number of holes)
-                            column_differences[0],column_differences[1],
-                            column_differences[2],column_differences[3],
-                            column_differences[4],column_differences[5],
-                            column_differences[6],column_differences[7],
-                            column_differences[8],column_differences[9],
-                            holes                 
-                        ]])
-                    elif (self.holes == False and self.height == True):
-                        next_state_inputs = np.array([[
-                            #Tetromino being used
-                            tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
-                            tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
-                            #State of next board (differences in column height and maximum height)
-                            column_differences[0],column_differences[1],
-                            column_differences[2],column_differences[3],
-                            column_differences[4],column_differences[5],
-                            column_differences[6],column_differences[7],
-                            column_differences[8],column_differences[9],
-                            height               
-                        ]])
-                    
-                    elif self.holes == True and self.height == True:
-                        next_state_inputs = np.array([[
-                            #Tetromino being used
-                            tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
-                            tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
-                            #State of next board (differences in column height, holes and maximum height)
-                            self.current_board.column_differences[0],self.current_board.column_differences[1],
-                            self.current_board.column_differences[2],self.current_board.column_differences[3],
-                            self.current_board.column_differences[4],self.current_board.column_differences[5],
-                            self.current_board.column_differences[6],self.current_board.column_differences[7],
-                            self.current_board.column_differences[8],self.current_board.column_differences[9],
-                            holes, height    
-                        ]])
-
-                    
-                    #Stores the 4 possible rotations for the tetromino
-                    tetromino_rotations = []
-                    tetromino_rotations.append(tetromino)
-                    for x in range (0,3):
-                        tetromino_rotations.append(self.rotate_agent_tetromino(tetromino_rotations[x]))
-                    #queries ANN
-                    query_output = self.query(next_state_inputs, False)
-                   
-                    #retrieves values of valid placements and takes the maximum
-                    valid_placements = self.find_valid_placements(tetromino_rotations, next_state)
-                    tetromino_values = []
-                    for valid_rotation in valid_placements:
-                        for placement in valid_rotation:
-                            rotation = placement[0][0]
-                            column = placement[0][1]
-                            output_node = (rotation*10) + column #output node to retrieve the predicted value from.
-                            node_value = query_output[0][output_node]
-                            tetromino_values.append([node_value, output_node])
-                    maximum_value = None
-                    for value in tetromino_values:
-                        if value is not None:
-                            if maximum_value == None:
-                                maximum_value = value
-                            elif maximum_value[0] < value[0]:
-                                maximum_value = value
-                    maximum_values.append(maximum_value)
+                memory_samples = random.sample(self.event_memory, self.sample_size)
                 
-                maximum_value = None
-                for value in maximum_values:
-                    try:
-                        #Fixes issue where maximum_values may contain None.
-                        #Resolved by ignoring None value
-                        if value is not None:
-                            if maximum_value == None:
-                                maximum_value = value
-                            elif maximum_value[0] < value[0]:
-                                maximum_value = value
-                    except:
-                        print("None value in approximator. Value ignored!")
+            for memory in memory_samples:
+                previous_state = memory[0]
+                action = memory[1]
+                reward = memory[2]
+                next_state = memory[3]
+                terminal_state = memory[4]
                 
-                if maximum_value == None:
-                    #Handles rare, but not impossible state of no valid moves.
-                    print("Maximum value set to None. Resetting to [0,0]")
-                    maximum_value = [0,0]
-                target = reward + (self.discount * maximum_value[0])
-                
-            previous_state_input = np.array([previous_state])
-            original_prediction = self.target_net.predict(np.array(previous_state_input))
-            target_array = []
-            action_node = (action[0]*10) + action[2] #output node to retrieve the predicted value from.
-            for x in range (0,40):
-                if action_node == x:
-                    target_array.append(target)
+                if terminal_state == True:
+                    #Terminal state, so target is just the received reward / punishment
+                    target = np.array([reward])
                 else:
-                    target_array.append(original_prediction[0,x])
-            net_target = np.array([target_array])
-            self.current_net.fit(previous_state_input, net_target,verbose=0)
+                    """
+                    From the next_state:
+                    For each possible next tetromino
+                        Calculate the next possible actions
+                        Choose the Maximum Possible Reward
+                    Pick the Maximum from the maximums, set to SAMAX
+                    Perform: target = Reward + (GAMMA * SAMAX)
+                    """
+                    column_differences = next_state.column_differences
+                    holes = next_state.get_holes()
+                    height = next_state.get_board_height()
+                    maximum_values = []
+                    tetrominos = list_of_tetrominoes
+                    for tetromino_shape in tetrominos:
+                        tetromino = self.convert_tetromino(tetromino_shape)
+                        #Loads a standard 4*2 tetromino input
+                        tetromino_input = self.tetromino_to_input(tetromino)
+                        
+                                            
+                        if self.holes == False and self.height == False:
+                            next_state_inputs = np.array([[
+                                #Tetromino being used
+                                tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
+                                tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
+                                #State of next board (differences in column height)
+                                column_differences[0],column_differences[1],
+                                column_differences[2],column_differences[3],
+                                column_differences[4],column_differences[5],
+                                column_differences[6],column_differences[7],
+                                column_differences[8],column_differences[9],                        
+                            ]])
+                        elif (self.holes == True and self.height == False):
+                            next_state_inputs = np.array([[
+                                #Tetromino being used
+                                tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
+                                tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
+                                #State of next board (differences in column height and number of holes)
+                                column_differences[0],column_differences[1],
+                                column_differences[2],column_differences[3],
+                                column_differences[4],column_differences[5],
+                                column_differences[6],column_differences[7],
+                                column_differences[8],column_differences[9],
+                                holes                 
+                            ]])
+                        elif (self.holes == False and self.height == True):
+                            next_state_inputs = np.array([[
+                                #Tetromino being used
+                                tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
+                                tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
+                                #State of next board (differences in column height and maximum height)
+                                column_differences[0],column_differences[1],
+                                column_differences[2],column_differences[3],
+                                column_differences[4],column_differences[5],
+                                column_differences[6],column_differences[7],
+                                column_differences[8],column_differences[9],
+                                height               
+                            ]])
+                        
+                        elif self.holes == True and self.height == True:
+                            next_state_inputs = np.array([[
+                                #Tetromino being used
+                                tetromino_input[0][0],tetromino_input[0][1],tetromino_input[0][2],tetromino_input[0][3],
+                                tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
+                                #State of next board (differences in column height, holes and maximum height)
+                                self.current_board.column_differences[0],self.current_board.column_differences[1],
+                                self.current_board.column_differences[2],self.current_board.column_differences[3],
+                                self.current_board.column_differences[4],self.current_board.column_differences[5],
+                                self.current_board.column_differences[6],self.current_board.column_differences[7],
+                                self.current_board.column_differences[8],self.current_board.column_differences[9],
+                                holes, height    
+                            ]])
+    
+                        
+                        #Stores the 4 possible rotations for the tetromino
+                        tetromino_rotations = []
+                        tetromino_rotations.append(tetromino)
+                        for x in range (0,3):
+                            tetromino_rotations.append(self.rotate_agent_tetromino(tetromino_rotations[x]))
+                        #queries ANN
+                        query_output = self.query(next_state_inputs, False)
+                       
+                        #retrieves values of valid placements and takes the maximum
+                        valid_placements = self.find_valid_placements(tetromino_rotations, next_state)
+                        tetromino_values = []
+                        for valid_rotation in valid_placements:
+                            for placement in valid_rotation:
+                                rotation = placement[0][0]
+                                column = placement[0][1]
+                                output_node = (rotation*10) + column #output node to retrieve the predicted value from.
+                                node_value = query_output[0][output_node]
+                                tetromino_values.append([node_value, output_node])
+                        maximum_value = None
+                        for value in tetromino_values:
+                            if value is not None:
+                                if maximum_value == None:
+                                    maximum_value = value
+                                elif maximum_value[0] < value[0]:
+                                    maximum_value = value
+                        maximum_values.append(maximum_value)
+                    
+                    maximum_value = None
+                    for value in maximum_values:
+                        try:
+                            #Fixes issue where maximum_values may contain None.
+                            #Resolved by ignoring None value
+                            if value is not None:
+                                if maximum_value == None:
+                                    maximum_value = value
+                                elif maximum_value[0] < value[0]:
+                                    maximum_value = value
+                        except:
+                            print("None value in approximator. Value ignored!")
+                    
+                    if maximum_value == None:
+                        #Handles rare, but not impossible state of no valid moves.
+                        print("Maximum value set to None. Resetting to [0,0]")
+                        maximum_value = [0,0]
+                    target = reward + (self.discount * maximum_value[0])
+                    
+                previous_state_input = np.array([previous_state])
+                original_prediction = self.target_net.predict(np.array(previous_state_input))
+                target_array = []
+                action_node = (action[0]*10) + action[2] #output node to retrieve the predicted value from.
+                for x in range (0,40):
+                    if action_node == x:
+                        target_array.append(target)
+                    else:
+                        target_array.append(original_prediction[0,x])
+                net_target = np.array([target_array])
+                self.current_net.fit(previous_state_input, net_target,verbose=0)
             
     def reset_approximaters(self):
         """
@@ -953,6 +974,10 @@ class agent():
         previous_column_diffs = copy.deepcopy(self.current_board.column_differences)
         if self.holes == False and self.height == False:
             previous_state = [#Tetromino being used
+                tetromino_input[0][0],tetromino_input[0][1],
+                tetromino_input[0][2],tetromino_input[0][3],
+                tetromino_input[1][0],tetromino_input[1][1],
+                tetromino_input[1][2],tetromino_input[1][3], 
                 previous_column_diffs[0],previous_column_diffs[1],
                 previous_column_diffs[2],previous_column_diffs[3],
                 previous_column_diffs[4],previous_column_diffs[5],
@@ -964,7 +989,8 @@ class agent():
             previous_state = [#Tetromino being used
                 tetromino_input[0][0],tetromino_input[0][1],
                 tetromino_input[0][2],tetromino_input[0][3],
-                tetromino_input[1][0],tetromino_input[1][1],tetromino_input[1][2],tetromino_input[1][3],
+                tetromino_input[1][0],tetromino_input[1][1],
+                tetromino_input[1][2],tetromino_input[1][3],
                 previous_column_diffs[0],previous_column_diffs[1],
                 previous_column_diffs[2],previous_column_diffs[3],
                 previous_column_diffs[4],previous_column_diffs[5],
