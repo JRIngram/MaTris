@@ -72,10 +72,9 @@ class Matris(object):
     tetromino_placement = None
 
     def __init__(self):
-        """
         self.surface = screen.subsurface(Rect((MATRIS_OFFSET+BORDERWIDTH, MATRIS_OFFSET+BORDERWIDTH),
                                               (MATRIX_WIDTH * BLOCKSIZE, (MATRIX_HEIGHT-2) * BLOCKSIZE)))
-        """
+        
         self.matrix = dict()
         for y in range(MATRIX_HEIGHT):
             for x in range(MATRIX_WIDTH):
@@ -250,7 +249,6 @@ class Matris(object):
 
                 #                                       I hide the 2 first rows by drawing them outside of the surface
                 block_location = Rect(x*BLOCKSIZE, (y*BLOCKSIZE - 2*BLOCKSIZE), BLOCKSIZE, BLOCKSIZE)
-                """
                 if with_tetromino[(y,x)] is None:
                     self.surface.fill(BGCOLOR, block_location)
                 else:
@@ -258,7 +256,7 @@ class Matris(object):
                         self.surface.fill(BGCOLOR, block_location)
 
                     self.surface.blit(with_tetromino[(y,x)][1], block_location)
-                """
+                
 
     def gameover(self, full_exit=False):
         """
@@ -509,8 +507,6 @@ class Matris(object):
             self.agent.set_current_board(self.board)
 
             #Remembers previous S,A,R,S
-
-            #reward = self.agent.update_score_and_lines(self.score, self.lines)
             if self.agent.check_game_over() and lines_cleared != -1:  #Ends episode if previous turn was terminal
                 #End of episode
                 if self.agent.random_moves == False:
@@ -646,11 +642,11 @@ class Game(object):
         clock = pygame.time.Clock()
         self.matris = Matris()
 
-        #screen.blit(construct_nightmare(screen.get_size()), (0,0))
+        screen.blit(construct_nightmare(screen.get_size()), (0,0))
 
         matris_border = Surface((MATRIX_WIDTH*BLOCKSIZE+BORDERWIDTH*2, VISIBLE_MATRIX_HEIGHT*BLOCKSIZE+BORDERWIDTH*2))
         matris_border.fill(BORDERCOLOR)
-        #screen.blit(matris_border, (MATRIS_OFFSET,MATRIS_OFFSET))
+        screen.blit(matris_border, (MATRIS_OFFSET,MATRIS_OFFSET))
 
         self.redraw()
 
@@ -679,7 +675,7 @@ class Game(object):
 
             self.matris.draw_surface()
 
-        #pygame.display.flip()
+        pygame.display.flip()
 
 
     def blit_info(self):
@@ -722,7 +718,7 @@ class Game(object):
         area.blit(linessurf, (0, levelsurf.get_rect().height + scoresurf.get_rect().height))
         area.blit(combosurf, (0, levelsurf.get_rect().height + scoresurf.get_rect().height + linessurf.get_rect().height))
 
-        #screen.blit(area, area.get_rect(bottom=HEIGHT-MATRIS_OFFSET, centerx=TRICKY_CENTERX))
+        screen.blit(area, area.get_rect(bottom=HEIGHT-MATRIS_OFFSET, centerx=TRICKY_CENTERX))
 
 
     def blit_next_tetromino(self, tetromino_surf):
@@ -740,7 +736,7 @@ class Game(object):
         center = areasize/2 - tetromino_surf_size/2
         area.blit(tetromino_surf, (center, center))
 
-        #screen.blit(area, area.get_rect(top=MATRIS_OFFSET, centerx=TRICKY_CENTERX))
+        screen.blit(area, area.get_rect(top=MATRIS_OFFSET, centerx=TRICKY_CENTERX))
 
 class Menu(object):
     """
@@ -749,7 +745,6 @@ class Menu(object):
     running = True
     def main(self, screen):
         clock = pygame.time.Clock()
-        """
         menu = kezmenu.KezMenu(
             ['Play!', lambda: Game().main(screen)],
             ['Quit', lambda: setattr(self, 'running', False)],
@@ -763,11 +758,10 @@ class Menu(object):
         highscoresurf = self.construct_highscoresurf() #Loads highscore onto menu
 
         timepassed = clock.tick(30) / 1000.
-        """
 
         Game().main(screen)
 
-        """
+        
         while self.running:
             events = pygame.event.get()
 
@@ -786,7 +780,7 @@ class Menu(object):
             screen.blit(highscoresurf, highscoresurf.get_rect(right=WIDTH-50, bottom=HEIGHT-50))
             menu.draw(screen)
             pygame.display.flip()
-        """
+        
 
 
     def construct_highscoresurf(self):
@@ -824,6 +818,6 @@ def construct_nightmare(size):
 if __name__ == '__main__':
     pygame.init()
 
-    screen = None
-    #pygame.display.set_caption("MaTris")
+    screen = screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("MaTris")
     Menu().main(screen)
